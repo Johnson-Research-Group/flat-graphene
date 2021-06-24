@@ -15,8 +15,6 @@ TO DO:
   -make hexagonal unit cell generators
 """
 
-#specify rectangular on top of simple cubic
-#specify hexagonal on top of hexagonal
 #how to deal with multiple layers?
 
 class AAGrapheneFactoryRectangular(SimpleOrthorhombicFactory):
@@ -92,7 +90,6 @@ def make_graphene(alignment,cell_type,n_layer,n_x,n_y,lat_con,a_nn=None,sep=None
         
 
 if (__name__=="__main__"):
-    #def make_graphene(alignment,cell_type,n_layer,n_x,n_y,lat_con,a_nn=None,sep=None,disp=False):
     atoms=make_graphene('AA','rect',
                         1,1,1,0.0,a_nn=1.0,disp=True)
     ase.visualize.view(atoms)
