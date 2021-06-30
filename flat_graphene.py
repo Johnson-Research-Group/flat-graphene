@@ -61,15 +61,16 @@ def make_layer(alignment,cell_type,n_1,n_2,lat_con,z_val):
     lat_con: in-plane lattice constant, float [Angstroms]
     z_val: z coordinates of atoms in layer, float [Angstroms]
     ---Output---
-    atoms: the graphene layer shifted appropriately, ase object
+    atoms: a single graphene layer shifted appropriately, ASE object
     """
 
     a_nn=lat_con/(2*np.sin(np.pi/3)) #compute nearest neighbor distance
     vert_shift=np.array([0.,0.,z_val])
     if (cell_type=='rect'):
+        fact=GrapheneFactoryRectangular()
         if (alignment=='AA'):
             horz_shift=np.array([0.,0.,0.])
-        elif (alignment='AB'):
+        elif (alignment=='AB'):
             horz_shift=np.array([a_nn,0.,0.])
         elif (alignment=='SP'):
             print('ERROR: SP not implemented (need to find shift)')
@@ -77,18 +78,18 @@ def make_layer(alignment,cell_type,n_1,n_2,lat_con,z_val):
         latticeconstant_a_nn_1=np.array([3,2*np.sin(np.pi/3),1]) #lattice constants to scale unit cell from 1x1x1 such that afterwards the nearest neighbor distances are all 1
         scale_x_y_z=np.array([a_nn,a_nn,1])
         latticeconstant_scaled=tuple(scale_x_y_z*latticeconstant_a_nn_1) #scale up a_nn=1 unit cell by a_nn computed from lattice constant
-        atoms=GrapheneFactoryRectangular(directions=[[1,0,0],[0,1,0],[0,0,1]],
-                                         size=(n_1,n_2,1),
-                                         symbol='C',
-                                         latticeconstant=latticeconstant_scaled)
+        atoms=fact(directions=[[1,0,0],[0,1,0],[0,0,1]],
+                   size=(n_1,n_2,1),
+                   symbol='C',
+                   latticeconstant=latticeconstant_scaled)
         atoms.translate(horz_shift+vert_shift) #shift layer according to alignment and z_val
-    elif (cell_type='hex'):
+    elif (cell_type=='hex'):
         print('ERROR: hexagonal unit cells not yet implemented')
 
     return atoms
 
 
-def make_graphene(alignment,cell_type,n_layer,n_1,n_2,lat_con,a_nn=None,sep=None,disp=False):
+def make_graphene(alignment,cell_type,n_layer,n_1,n_2,lat_con,a_nn=None,sep=None):
     """
     Creates and returns ASE atoms object with specified graphene's geometry
     ---Input---
@@ -107,7 +108,7 @@ def make_graphene(alignment,cell_type,n_layer,n_1,n_2,lat_con,a_nn=None,sep=None
     sep: interlayer separation for n_layer>1, n_layer-1 list of separations
          (relative to layer below) or float (uniform separations)
     ---Output---
-    NONE: geometry is written to specified file is written
+    atoms: graphene stack, ASE atoms object
     """
 
     #TO DO:
@@ -126,13 +127,13 @@ def make_graphene(alignment,cell_type,n_layer,n_1,n_2,lat_con,a_nn=None,sep=None
             return
         else:
             alignment=['AA']+alignment #add "hidden" 'AA' alignment for bottom layer
-    elif (isinstance(alignment,'string')):
+    elif (isinstance(alignment,str)):
           if (alignment not in ['AA','AB','SP']):
             print('ERROR: alignment string not \'AA\',\'AB\',\'SP\'')
             return
-          else: #make string input into n_layer-1 length string
+          else: #make string input into n_layer length string
               alignment_string=alignment
-              alignment=[]*(n_layer) #includes specification of bottom layer
+              alignment=[0]*(n_layer) #includes specification of bottom layer
               for i_layer in range(len(alignment)):
                   if (i_layer%2 == 0):
                       alignment[i_layer]='AA'
@@ -155,7 +156,7 @@ def make_graphene(alignment,cell_type,n_layer,n_1,n_2,lat_con,a_nn=None,sep=None
             return
         elif (isinstance(sep,list)):
             if (len(sep) != (n_layer-1)):
-                print('ERROR: specifying sep as list requires list of length n_layer-1')
+                print('ERROR: specifying sep as list requires list length n_layer-1')
                 return
             else:
                 sep_input=np.array([0.0]+sep,dtype=float) #snuck in leading 0.0 for first layer
@@ -169,60 +170,27 @@ def make_graphene(alignment,cell_type,n_layer,n_1,n_2,lat_con,a_nn=None,sep=None
     else:
         print('ERROR: n_layer must be a positive integer')
             
-
-
+    print('z_abs:',z_abs)
+    print('alignment:',alignment)
     #create specified geometry
-    atoms=make_layer(cell_type,alignment[0],z_abs[0]) #make monolayer as atoms
-    for i_layer in range(1,n_layer):
+    atoms=make_layer(alignment[0],cell_type,n_1,n_2,lat_con,z_abs[0]) #make monolayer as atoms
     #add layers on top on at a time
-        atoms+=make_layer('cell_type',alignment[i_layer],z_abs[i_layer])
+    for i_layer in range(1,n_layer):
+        atoms+=make_layer(alignment[i_layer],cell_type,n_1,n_2,lat_con,z_abs[i_layer])
         #update z component of cell to account for stacking?
-    #return atoms
         
-    if (n_layer==1):
-        if (cell_type=='rect'):
-            latticeconstant_a_nn_1=np.array([3,2*np.sin(np.pi/3),1]) #lattice constants to scale unit cell from 1x1x1 such that afterwards the nearest neighbor distances are all 1
-            scale_x_y_z=np.array([lat_con/(2*np.sin(np.pi/3)),lat_con/(2*np.sin(np.pi/3)),1])
-            latticeconstant_scaled=tuple(scale_x_y_z*latticeconstant_a_nn_1) #scale up a_nn=1 unit cell by a_nn computed from lattice constant
-            atoms=AA(directions=[[1,0,0],[0,1,0],[0,0,1]],
-                    size=(n_1,n_2,1),
-                    symbol='C',
-                    latticeconstant=latticeconstant_scaled)
-        elif (cell_type=='hex'):
-                pass
-    elif (n_layer==2):
-        if (not sep):
-            print('ERROR: bilayer requires defined interlayer separation (sep)')
-            return
-        if (cell_type=='rect'):
-            if (alignment == 'AA'):
-
-                latticeconstant_a_nn_1=np.array([3,2*np.sin(np.pi/3),1]) #lattice constants to scale unit cell from 1x1x1 such that afterwards the nearest neighbor distances are all 1
-                scale_x_y_z=np.array([lat_con/(2*np.sin(np.pi/3)),lat_con/(2*np.sin(np.pi/3)),sep])
-                latticeconstant_scaled=tuple(scale_x_y_z*latticeconstant_a_nn_1) #scale up a_nn=1 unit cell by a_nn computed from lattice constant
-                atoms=AA(directions=[[1,0,0],[0,1,0],[0,0,1]],
-                        size=(n_1,n_2,2),
-                        symbol='C',
-                        latticeconstant=latticeconstant_scaled)
-            elif (alignment == 'AB'):
-                pass
-        elif (cell_type=='hex'):
-            if (alignment == 'AA'):
-                pass
-            elif (alignment == 'AB'):
-                pass
-            pass
-
     return atoms
 
         
 
 if (__name__=="__main__"):
-    #def make_layer(alignment,cell_type,n_1,n_2,lat_con,z_val):
-    atoms=make_layer(alignment='AA',cell_type='rect',n_1=1,n_2=1,lat_con=1,z_val=1.0)
     """
-    def make_graphene(alignment,cell_type,n_layer,n_1,n_2,lat_con,a_nn=None,sep=None,disp=False):
-    atoms=make_graphene(alignment='AA',cell_type='rect',n_layer=2,
-                        n_1=10,n_2=10,lat_con=0.0,a_nn=1.0,sep=1.0,disp=True)
+    def make_layer(alignment,cell_type,n_1,n_2,lat_con,z_val):
+    atoms=make_layer(alignment='AA',cell_type='rect',n_1=2,n_2=2,lat_con=1,z_val=2.0)
     """
+    """
+    def make_graphene(alignment,cell_type,n_layer,n_1,n_2,lat_con,a_nn=None,sep=None):
+    """
+    atoms=make_graphene(alignment=['AA','AB','AB'],cell_type='rect',n_layer=4,
+                        n_1=3,n_2=3,lat_con=0.0,a_nn=0.6,sep=1.0)
     ase.visualize.view(atoms)
