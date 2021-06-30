@@ -8,15 +8,10 @@ from ase.visualize import view
 
 """
 TO DO:
-  -rethink how to assemble multilayers (can't handle AA with differrent atoms
-   in different layers)
-    -solution: only have AAGrapheneFactoryRectangular() and then assemble more complicated Atoms objects by joining AA monolayers
-    -this allows n-layer specification with optional property list for each layer (atom type, mass, etc.)
+  -change cell height based on number of layers
   -don't forget periodic boundary conditions
   -make hexagonal unit cell generators
 """
-
-#how to deal with multiple layers?
 
 class GrapheneFactoryRectangular(SimpleOrthorhombicFactory):
     """
@@ -45,7 +40,7 @@ class GrapheneFactoryRectangular(SimpleOrthorhombicFactory):
 #class GrapheneFactoryHexagonal(SimpleHexagonalFactory)
 ######two atom basis
 
-def make_layer(alignment,cell_type,n_1,n_2,lat_con,z_val):
+def make_layer(alignment,cell_type,n_1,n_2,lat_con,z_val,sym,mass):
     """
     Creates and returns a single layer of graphene which has been shifted
     according to its alignment (AA, AB, SP) and z_value
@@ -80,8 +75,10 @@ def make_layer(alignment,cell_type,n_1,n_2,lat_con,z_val):
         latticeconstant_scaled=tuple(scale_x_y_z*latticeconstant_a_nn_1) #scale up a_nn=1 unit cell by a_nn computed from lattice constant
         atoms=fact(directions=[[1,0,0],[0,1,0],[0,0,1]],
                    size=(n_1,n_2,1),
-                   symbol='C',
-                   latticeconstant=latticeconstant_scaled)
+                   latticeconstant=latticeconstant_scaled,
+                   symbol=sym)
+        n_atoms_layer=atoms.get_masses().shape[0] #extract number of atoms in layer
+        atoms.set_masses(n_atoms_layer*np.ones(n_atoms_layer)) #set masses to mass (rather than ASE default by symbol)
         atoms.translate(horz_shift+vert_shift) #shift layer according to alignment and z_val
     elif (cell_type=='hex'):
         print('ERROR: hexagonal unit cells not yet implemented')
@@ -89,9 +86,10 @@ def make_layer(alignment,cell_type,n_1,n_2,lat_con,z_val):
     return atoms
 
 
-def make_graphene(alignment,cell_type,n_layer,n_1,n_2,lat_con,a_nn=None,sep=None):
+def make_graphene(alignment,cell_type,n_layer,n_1,n_2,lat_con,a_nn=None,sep=None,sym='C',mass=12.01):
     """
-    Creates and returns ASE atoms object with specified graphene's geometry
+    Generates untwisted, uncorrugated graphene and returns ASE atoms object
+    with specified graphene's geometry
     ---Input---
     alignment: specification of alignment for layers above first,
                ('AA','AB','SP') relative to first layer, list of strings
@@ -107,6 +105,11 @@ def make_graphene(alignment,cell_type,n_layer,n_1,n_2,lat_con,a_nn=None,sep=None
           nearest neighbors and override lat_con, float [Angstroms]
     sep: interlayer separation for n_layer>1, n_layer-1 list of separations
          (relative to layer below) or float (uniform separations)
+    sym: optional atomic symbol, list of length n_layer containing
+         characters/strings or single character/string for same symbol
+         for every layer
+    mass: optional mass, list of length n_layer containing numeric values
+          or single numerical value if every layer has the same mass
     ---Output---
     atoms: graphene stack, ASE atoms object
     """
@@ -161,7 +164,7 @@ def make_graphene(alignment,cell_type,n_layer,n_1,n_2,lat_con,a_nn=None,sep=None
             else:
                 sep_input=np.array([0.0]+sep,dtype=float) #snuck in leading 0.0 for first layer
                 z_abs=np.empty(sep_input.shape[0],dtype=float)
-                for i_sep in range(z_abs):
+                for i_sep in range(z_abs.shape[0]):
                     #turn offsets from (relative to layer below) to (relative to
                     #  bottom layer)
                     z_abs[i_sep]=np.sum(sep_input[0:i_sep+1])
@@ -169,14 +172,33 @@ def make_graphene(alignment,cell_type,n_layer,n_1,n_2,lat_con,a_nn=None,sep=None
             z_abs=sep*np.arange(n_layer) #[0, sep, 2*sep, ...]
     else:
         print('ERROR: n_layer must be a positive integer')
+
+    #check errors in sym
+    if (isinstance(sym,list)):
+        if (len(sym) != n_layer):
+            print('ERROR: specifying sym as list requires length n_layer')
+            return
+    elif (isinstance(sym,str)):
+        sym=[sym]*n_layer #convert to list of length n_layer
+    else:
+        print('ERROR: optional sym inputs must be list of characters/strings or character/string')
+
+    #check errors in mass
+    if (isinstance(mass,list)):
+        if (len(mass) != n_layer):
+            print('ERROR: specifying mass as list requires length n_layer')
+            return
+    elif (isinstance(mass,(float,int))):
+        mass=mass*np.ones(n_layer)
+    else:
+        print('ERROR: optional mass inputs must be list or numeric')
+
             
-    print('z_abs:',z_abs)
-    print('alignment:',alignment)
     #create specified geometry
-    atoms=make_layer(alignment[0],cell_type,n_1,n_2,lat_con,z_abs[0]) #make monolayer as atoms
+    atoms=make_layer(alignment[0],cell_type,n_1,n_2,lat_con,z_abs[0],sym[0],mass[0]) #make monolayer as atoms
     #add layers on top on at a time
     for i_layer in range(1,n_layer):
-        atoms+=make_layer(alignment[i_layer],cell_type,n_1,n_2,lat_con,z_abs[i_layer])
+        atoms+=make_layer(alignment[i_layer],cell_type,n_1,n_2,lat_con,z_abs[i_layer],sym[i_layer],mass[i_layer])
         #update z component of cell to account for stacking?
         
     return atoms
@@ -184,13 +206,9 @@ def make_graphene(alignment,cell_type,n_layer,n_1,n_2,lat_con,a_nn=None,sep=None
         
 
 if (__name__=="__main__"):
-    """
-    def make_layer(alignment,cell_type,n_1,n_2,lat_con,z_val):
-    atoms=make_layer(alignment='AA',cell_type='rect',n_1=2,n_2=2,lat_con=1,z_val=2.0)
-    """
-    """
-    def make_graphene(alignment,cell_type,n_layer,n_1,n_2,lat_con,a_nn=None,sep=None):
-    """
-    atoms=make_graphene(alignment=['AA','AB','AB'],cell_type='rect',n_layer=4,
-                        n_1=3,n_2=3,lat_con=0.0,a_nn=0.6,sep=1.0)
+    atoms=make_graphene(alignment='AB',cell_type='rect',n_layer=3,
+		        n_1=3,n_2=3,lat_con=0.0,a_nn=1.5,sep=1.0,sym='C',mass=12)
+    atoms=make_graphene(alignment=['AB','AA'],cell_type='rect',n_layer=3,
+		        n_1=3,n_2=3,lat_con=0.0,a_nn=1.5,sep=[1.0,1.0],
+                        sym=['C','C','C'],mass=[12,12,12])
     ase.visualize.view(atoms)
