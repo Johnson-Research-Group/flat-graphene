@@ -68,8 +68,7 @@ def make_layer(alignment,cell_type,n_1,n_2,lat_con,z_val,sym,mass):
         elif (alignment=='AB'):
             horz_shift=np.array([a_nn,0.,0.])
         elif (alignment=='SP'):
-            print('ERROR: SP not implemented (need to find shift)')
-            return
+            horz_shift=np.array([0.,lat_con/2,0.])
         latticeconstant_a_nn_1=np.array([3,2*np.sin(np.pi/3),1]) #lattice constants to scale unit cell from 1x1x1 such that afterwards the nearest neighbor distances are all 1
         scale_x_y_z=np.array([a_nn,a_nn,1])
         latticeconstant_scaled=tuple(scale_x_y_z*latticeconstant_a_nn_1) #scale up a_nn=1 unit cell by a_nn computed from lattice constant
@@ -103,7 +102,7 @@ def make_graphene(alignment,cell_type,n_layer,n_1,n_2,lat_con,a_nn=None,sep=None
     lat_con: in-plane lattice constant, float [Angstroms]
     a_nn: optional argument to specify distance between
           nearest neighbors and override lat_con, float [Angstroms]
-    sep: interlayer separation for n_layer>1, n_layer-1 list of separations
+    sep: interlayer separation(s) for n_layer>1, n_layer-1 list of separations
          (relative to layer below) or float (uniform separations)
     sym: optional atomic symbol, list of length n_layer containing
          characters/strings or single character/string for same symbol
@@ -113,9 +112,6 @@ def make_graphene(alignment,cell_type,n_layer,n_1,n_2,lat_con,a_nn=None,sep=None
     ---Output---
     atoms: graphene stack, ASE atoms object
     """
-
-    #TO DO:
-    #  -same float/list option thing for mass and for symbol
 
     n_layer=int(n_layer) #clean input
 
@@ -169,6 +165,7 @@ def make_graphene(alignment,cell_type,n_layer,n_1,n_2,lat_con,a_nn=None,sep=None
                     #  bottom layer)
                     z_abs[i_sep]=np.sum(sep_input[0:i_sep+1])
         elif (isinstance(sep,(float,int))):
+            sep_input=np.array([0.0]+[sep]*(n_layer-1),dtype=float) #sneak in 0.0
             z_abs=sep*np.arange(n_layer) #[0, sep, 2*sep, ...]
     else:
         print('ERROR: n_layer must be a positive integer')
@@ -198,17 +195,25 @@ def make_graphene(alignment,cell_type,n_layer,n_1,n_2,lat_con,a_nn=None,sep=None
     atoms=make_layer(alignment[0],cell_type,n_1,n_2,lat_con,z_abs[0],sym[0],mass[0]) #make monolayer as atoms
     #add layers on top on at a time
     for i_layer in range(1,n_layer):
-        atoms+=make_layer(alignment[i_layer],cell_type,n_1,n_2,lat_con,z_abs[i_layer],sym[i_layer],mass[i_layer])
-        #update z component of cell to account for stacking?
-        
+        #add new atoms to object
+        atoms+=make_layer(alignment[i_layer],cell_type,n_1,n_2,lat_con,z_abs[i_layer],sym[i_layer],mass[i_layer]) 
+        #adjust z-height of simulation cell
+        cur_cell=atoms.get_cell()
+        cur_cell[2]=(z_abs[i_layer]+sep_input[i_layer])*np.eye(3)[:,2] #set z-height as vector, set buffer above to previous interlayer separation (fine in most cases)
+        atoms.set_cell(cur_cell)
+
     return atoms
 
         
 
 if (__name__=="__main__"):
+    """
     atoms=make_graphene(alignment='AB',cell_type='rect',n_layer=3,
 		        n_1=3,n_2=3,lat_con=0.0,a_nn=1.5,sep=1.0,sym='C',mass=12)
     atoms=make_graphene(alignment=['AB','AA'],cell_type='rect',n_layer=3,
 		        n_1=3,n_2=3,lat_con=0.0,a_nn=1.5,sep=[1.0,1.0],
                         sym=['C','C','C'],mass=[12,12,12])
+    """
+    atoms=make_graphene(alignment='AB',cell_type='rect',n_layer=4,
+		        n_1=3,n_2=3,lat_con=0.0,a_nn=1.5,sep=1.0)
     ase.visualize.view(atoms)
