@@ -39,12 +39,13 @@ This example creates an AB trilayer graphene system. Here AB means the odd layer
 ```python
 import ase
 from ase.visualize import view
+import flat_graphene as fg
 #note the inputs are all given with their names for clarity, but this is not necessary
 #the nearest neighbor distance (in-plane) a_nn is optional, and overrides the lat_con variable
 #  meaning the value of lat_con is unused
-atoms=make_graphene(alignment='AB',cell_type='rect',n_layer=3,
-		    n_1=3,n_2=3,lat_con=0.0,a_nn=1.5,sep=1.0,
-		    sym='C',mass=12)
+atoms=fg.make_graphene(alignment='AB',cell_type='rect',n_layer=3,
+		       n_1=3,n_2=3,lat_con=0.0,a_nn=1.5,sep=1.0,
+		       sym='C',mass=12)
 ase.visualize.view(atoms)
 ```
 
@@ -53,9 +54,10 @@ This example gives the same result as the above, but specifies the relevant prop
 ```python
 import ase
 from ase.visualize import view
+import flat_graphene as fg
 #the comments from the above example apply here as well
-atoms=make_graphene(alignment=['AB','AA'],cell_type='rect',n_layer=3,
-		    n_1=3,n_2=3,lat_con=0.0,a_nn=1.5,sep=[1.0,1.0],
-		    sym=['C','C','C'],mass=[12,12,12])
+atoms=fg.make_graphene(alignment=['AB','AA'],cell_type='rect',n_layer=3,
+		       n_1=3,n_2=3,lat_con=0.0,a_nn=1.5,sep=[1.0,1.0],
+		       sym=['C','C','C'],mass=[12,12,12])
 ase.visualize.view(atoms)
 ```

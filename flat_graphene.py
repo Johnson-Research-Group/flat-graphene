@@ -214,6 +214,6 @@ if (__name__=="__main__"):
 		        n_1=3,n_2=3,lat_con=0.0,a_nn=1.5,sep=[1.0,1.0],
                         sym=['C','C','C'],mass=[12,12,12])
     """
-    atoms=make_graphene(alignment='AB',cell_type='rect',n_layer=4,
-		        n_1=3,n_2=3,lat_con=0.0,a_nn=1.5,sep=1.0)
+    atoms=make_graphene(alignment='SP',cell_type='rect',n_layer=2,
+		        n_1=3,n_2=3,lat_con=0.0,a_nn=1.5,sep=2.0)
     ase.visualize.view(atoms)
