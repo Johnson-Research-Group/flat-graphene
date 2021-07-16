@@ -8,9 +8,10 @@ Python module to generate flat (uncorrugated) graphene configurations with one o
 Non-twisted (shfited) graphene may be created using the `shift.make_graphene` function, which returns an ASE atoms object. Parameters include cell type (rectangular or hexagonal), alignment (AA,AB,SP), number of unit cells (in-plane), interlayer spacing, and lattice constant.
 
 ```python
+#flatgraphene/shift.py
 def make_graphene(alignment,cell_type,n_layer,n_1,n_2,lat_con,a_nn=None,sep=None,sym='C',mass=12.01):
     """
-    Generates untwisted, uncorrugated graphene and returns ASE atoms object
+    Generates non-twisted, uncorrugated graphene and returns ASE atoms object
     with specified graphene's geometry
     ---Input---
     alignment: specification of alignment for layers above first,
