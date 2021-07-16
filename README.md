@@ -31,21 +31,21 @@ def make_graphene(alignment,cell_type,n_layer,n_1,n_2,lat_con,a_nn=None,sep=None
     """
 ```
 
-Twisted graphene has not been officially implemented yet, though functions for it exist in `twist_bilayer_graphene.py`.
+Twisted graphene has not been officially implemented yet, though functions for it exist in `flatgraphene/twist.py`.
 
 ### Examples
 
-This example creates an AB trilayer graphene system. Here AB means the odd layers (including bottom) have no in-plane shift relative to the bottom layer while even layers are shifted by a single nearest neighbor distance.
+This example creates an AB trilayer graphene system. Here AB means the odd layers have no in-plane shift relative to the bottom layer while even layers are shifted by a single nearest neighbor distance.
 ```python
 import ase
 from ase.visualize import view
 import flat_graphene as fg
-#note the inputs are all given with their names for clarity, but this is not necessary
+#note the inputs are all given with variable name for clarity, but this is not necessary
 #the nearest neighbor distance (in-plane) a_nn is optional, and overrides the lat_con variable
 #  meaning the value of lat_con is unused
-atoms=fg.make_graphene(alignment='AB',cell_type='rect',n_layer=3,
-		       n_1=3,n_2=3,lat_con=0.0,a_nn=1.5,sep=1.0,
-		       sym='C',mass=12)
+atoms=fg.shift.make_graphene(alignment='AB',cell_type='rect',n_layer=3,
+		             n_1=3,n_2=3,lat_con=0.0,a_nn=1.5,sep=1.0,
+		             sym='C',mass=12)
 ase.visualize.view(atoms)
 ```
 
@@ -56,8 +56,8 @@ import ase
 from ase.visualize import view
 import flat_graphene as fg
 #the comments from the above example apply here as well
-atoms=fg.make_graphene(alignment=['AB','AA'],cell_type='rect',n_layer=3,
-		       n_1=3,n_2=3,lat_con=0.0,a_nn=1.5,sep=[1.0,1.0],
-		       sym=['C','C','C'],mass=[12,12,12])
+atoms=fg.shift.make_graphene(alignment=['AB','AA'],cell_type='rect',n_layer=3,
+		             n_1=3,n_2=3,lat_con=0.0,a_nn=1.5,sep=[1.0,1.0],
+		             sym=['C','C','C'],mass=[12,12,12])
 ase.visualize.view(atoms)
 ```
