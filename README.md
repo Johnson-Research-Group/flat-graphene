@@ -46,7 +46,7 @@ This example creates an AB trilayer graphene system. Here AB means the odd layer
 ```python
 import ase
 from ase.visualize import view
-import flat_graphene as fg
+import flatgraphene as fg
 #note the inputs are all given with variable name for clarity, but this is not necessary
 #the nearest neighbor distance (in-plane) a_nn is optional, and overrides the lat_con variable
 #  meaning the value of lat_con is unused
@@ -61,7 +61,7 @@ This example gives the same result as the above, but specifies the relevant prop
 ```python
 import ase
 from ase.visualize import view
-import flat_graphene as fg
+import flatgraphene as fg
 #the comments from the above example apply here as well
 atoms=fg.shift.make_graphene(alignment=['AB','AA'],cell_type='rect',n_layer=3,
 		             n_1=3,n_2=3,lat_con=0.0,a_nn=1.5,sep=[1.0,1.0],
