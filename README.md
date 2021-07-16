@@ -5,12 +5,13 @@ Python module to generate flat (uncorrugated) graphene configurations with one o
 
 ### Documentation
 
-Non-twisted graphene may be created using the `make_graphene` function, which returns an ASE atoms object. Parameters include cell type (rectangular or hexagonal), alignment (AA,AB,SP), number of unit cells (in-plane), interlayer spacing, and lattice constant.
+Non-twisted (shfited) graphene may be created using the `shift.make_graphene` function, which returns an ASE atoms object. Parameters include cell type (rectangular or hexagonal), alignment (AA,AB,SP), number of unit cells (in-plane), interlayer spacing, and lattice constant.
 
 ```python
-def make_graphene(alignment,cell_type,n_layer,n_1,n_2,lat_con,a_nn=None,sep=None):
+def make_graphene(alignment,cell_type,n_layer,n_1,n_2,lat_con,a_nn=None,sep=None,sym='C',mass=12.01):
     """
-    Creates and returns ASE atoms object with specified graphene's geometry
+    Generates untwisted, uncorrugated graphene and returns ASE atoms object
+    with specified graphene's geometry
     ---Input---
     alignment: specification of alignment for layers above first,
                ('AA','AB','SP') relative to first layer, list of strings
@@ -24,8 +25,13 @@ def make_graphene(alignment,cell_type,n_layer,n_1,n_2,lat_con,a_nn=None,sep=None
     lat_con: in-plane lattice constant, float [Angstroms]
     a_nn: optional argument to specify distance between
           nearest neighbors and override lat_con, float [Angstroms]
-    sep: interlayer separation for n_layer>1, n_layer-1 list of separations
+    sep: interlayer separation(s) for n_layer>1, n_layer-1 list of separations
          (relative to layer below) or float (uniform separations)
+    sym: optional atomic symbol, list of length n_layer containing
+         characters/strings or single character/string for same symbol
+         for every layer
+    mass: optional mass, list of length n_layer containing numeric values
+          or single numerical value if every layer has the same mass
     ---Output---
     atoms: graphene stack, ASE atoms object
     """
