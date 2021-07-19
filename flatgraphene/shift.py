@@ -104,8 +104,8 @@ def make_graphene(alignment,cell_type,n_layer,n_1,n_2,lat_con,a_nn=None,sep=None
           nearest neighbors and override lat_con, float [Angstroms]
     sep: interlayer separation(s) for n_layer>1, n_layer-1 list of separations
          (relative to layer below) or float (uniform separations)
-    sym: optional atomic symbol, list of length n_layer containing
-         characters/strings or single character/string for same symbol
+    sym: optional atomic symbol(s), list of length n_layer containing
+         characters/strings or single character/string if same symbol
          for every layer
     mass: optional mass, list of length n_layer containing numeric values
           or single numerical value if every layer has the same mass

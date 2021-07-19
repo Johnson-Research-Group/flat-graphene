@@ -1,0 +1,5 @@
+
+To do:
+   -figure out why multiletter symbols aren't allowed, 'Cu' terminates without error but 'C' and 'B' are fine
+   -add vacuum space specification before returning atoms object, so user only has to write to file
+   -work on twist.py if Tawfiq doesn't
