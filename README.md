@@ -9,9 +9,9 @@ Non-twisted (shfited) graphene may be created using the `shift.make_graphene` fu
 
 ```python
 #flatgraphene/shift.py
-def make_graphene(alignment,cell_type,n_layer,n_1,n_2,lat_con,a_nn=None,sep=None,sym='C',mass=12.01):
+def make_graphene(alignment,cell_type,n_layer,n_1,n_2,lat_con,a_nn=None,sep=None,sym='C',mass=12.01,h_vac=6):
     """
-    Generates non-twisted, uncorrugated graphene and returns ASE atoms object
+    Generates untwisted, uncorrugated graphene and returns ASE atoms object
     with specified graphene's geometry
     ---Input---
     alignment: specification of alignment for layers above first,
@@ -28,11 +28,12 @@ def make_graphene(alignment,cell_type,n_layer,n_1,n_2,lat_con,a_nn=None,sep=None
           nearest neighbors and override lat_con, float [Angstroms]
     sep: interlayer separation(s) for n_layer>1, n_layer-1 list of separations
          (relative to layer below) or float (uniform separations)
-    sym: optional atomic symbol, list of length n_layer containing
-         characters/strings or single character/string for same symbol
+    sym: optional atomic symbol(s), list of length n_layer containing
+         characters/strings or single character/string if same symbol
          for every layer
     mass: optional mass, list of length n_layer containing numeric values
           or single numerical value if every layer has the same mass
+    h_vac: height of the vacuum layer, float [Angstroms]
     ---Output---
     atoms: graphene stack, ASE atoms object
     """
@@ -52,7 +53,7 @@ import flatgraphene as fg
 #  meaning the value of lat_con is unused
 atoms=fg.shift.make_graphene(alignment='AB',cell_type='rect',n_layer=3,
 		             n_1=3,n_2=3,lat_con=0.0,a_nn=1.5,sep=1.0,
-		             sym='C',mass=12)
+		             sym='C',mass=12,h_vac=3)
 ase.visualize.view(atoms)
 ```
 
@@ -65,6 +66,6 @@ import flatgraphene as fg
 #the comments from the above example apply here as well
 atoms=fg.shift.make_graphene(alignment=['AB','AA'],cell_type='rect',n_layer=3,
 		             n_1=3,n_2=3,lat_con=0.0,a_nn=1.5,sep=[1.0,1.0],
-		             sym=['C','C','C'],mass=[12,12,12])
+		             sym=['C','C','C'],mass=[12,12,12],h_vac=3)
 ase.visualize.view(atoms)
 ```

@@ -85,7 +85,7 @@ def make_layer(alignment,cell_type,n_1,n_2,lat_con,z_val,sym,mass):
     return atoms
 
 
-def make_graphene(alignment,cell_type,n_layer,n_1,n_2,lat_con,a_nn=None,sep=None,sym='C',mass=12.01):
+def make_graphene(alignment,cell_type,n_layer,n_1,n_2,lat_con,a_nn=None,sep=None,sym='C',mass=12.01,h_vac=6):
     """
     Generates untwisted, uncorrugated graphene and returns ASE atoms object
     with specified graphene's geometry
@@ -109,6 +109,7 @@ def make_graphene(alignment,cell_type,n_layer,n_1,n_2,lat_con,a_nn=None,sep=None
          for every layer
     mass: optional mass, list of length n_layer containing numeric values
           or single numerical value if every layer has the same mass
+    h_vac: height of the vacuum layer, float [Angstroms]
     ---Output---
     atoms: graphene stack, ASE atoms object
     """
@@ -201,6 +202,9 @@ def make_graphene(alignment,cell_type,n_layer,n_1,n_2,lat_con,a_nn=None,sep=None
         cur_cell=atoms.get_cell()
         cur_cell[2]=(z_abs[i_layer]+sep_input[i_layer])*np.eye(3)[:,2] #set z-height as vector, set buffer above to previous interlayer separation (fine in most cases)
         atoms.set_cell(cur_cell)
+
+    #add vacuum layer
+    ase.build.add_vacuum(atoms,h_vac)
 
     return atoms
 
