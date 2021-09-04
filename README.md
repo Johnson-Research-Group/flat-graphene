@@ -51,7 +51,7 @@ import flatgraphene as fg
 #note the inputs are all given with variable name for clarity, but this is not necessary
 #the nearest neighbor distance (in-plane) a_nn is optional, and overrides the lat_con variable
 #  meaning the value of lat_con is unused
-atoms=fg.shift.make_graphene(alignment='AB',cell_type='rect',n_layer=3,
+atoms=fg.shift.make_graphene(stacking='AB',cell_type='rect',n_layer=3,
 		             n_1=3,n_2=3,lat_con=0.0,a_nn=1.5,sep=1.0,
 		             sym='C',mass=12,h_vac=3)
 ase.visualize.view(atoms)
@@ -64,8 +64,13 @@ import ase
 from ase.visualize import view
 import flatgraphene as fg
 #the comments from the above example apply here as well
-atoms=fg.shift.make_graphene(alignment=['AB','AA'],cell_type='rect',n_layer=3,
+atoms=fg.shift.make_graphene(stacking=['AB','AA'],cell_type='rect',n_layer=3,
 		             n_1=3,n_2=3,lat_con=0.0,a_nn=1.5,sep=[1.0,1.0],
 		             sym=['C','C','C'],mass=[12,12,12],h_vac=3)
 ase.visualize.view(atoms)
 ```
+
+To do:
+- fix tests and README
+- don't forget periodic boundary conditions (do I need to tell LAMMPS?)
+- make hexagonal unit cell generators
