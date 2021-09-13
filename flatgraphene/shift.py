@@ -3,8 +3,14 @@ import copy
 import numpy as np
 import ase
 from ase.lattice.orthorhombic import SimpleOrthorhombicFactory
+from ase.lattice.triclinic import TriclinicFactory
+from ase.lattice.hexagonal import HexagonalFactory
 from ase.visualize import view
 
+
+"""
+-single layer breaks something inside ASE
+"""
 
 
 class GrapheneFactoryRectangular(SimpleOrthorhombicFactory):
@@ -31,13 +37,30 @@ class GrapheneFactoryRectangular(SimpleOrthorhombicFactory):
     bravais_basis=bravais_basis_square
     element_basis=(0,0,0,0)
 
-#class GrapheneFactoryHexagonal(SimpleHexagonalFactory)
-######two atom basis
+
+class GrapheneFactoryTriclinic(TriclinicFactory):
+    """
+    
+    y              /--------/
+    ^             /        /
+    |__>x        /  o     /
+                o--------/
+          (0,0)-^
+     
+    """
+    #construct basis for triclinic unit cell in terms of triclinic basis vectors
+    bravais_basis_unit=np.array([ [0.,0.,0.],  #atomic basis for real system with lattice vector lengths=1
+                                  (1/3)*np.array([1.,1.,0.])])
+
+    #set properties of class
+    bravais_basis=bravais_basis_unit
+    element_basis=(0,0)
+
 
 def make_layer(stacking,cell_type,n_1,n_2,lat_con,z_val,sym,mass):
     """
     Creates and returns a single layer of graphene which has been shifted
-    according to its stacking (AA, AB, SP) and z_value
+    according to its stacking and z_value
     ---Input---
     stacking: specification of stacking for layers above first,
               ('AA','AB','SP') relative to first layer,
@@ -48,15 +71,19 @@ def make_layer(stacking,cell_type,n_1,n_2,lat_con,z_val,sym,mass):
     n_2: number of unit cells in y direction, integer
     lat_con: in-plane lattice constant, float [Angstroms]
     z_val: z coordinates of atoms in layer, float [Angstroms]
+    sym: optional atomic symbol(s), list of length n_layer containing
+         characters/strings or single character/string if same symbol
+         for every layer
+    mass: optional mass, list of length n_layer containing numeric values
+          or single numerical value if every layer has the same mass
     ---Output---
     layer: a single graphene layer shifted appropriately, ASE object
     """
-
-    a_nn=lat_con/(2*np.sin(np.pi/3)) #compute nearest neighbor distance
     vert_shift=np.array([0.,0.,z_val])
     horz_shift=np.zeros(3)
     if (cell_type=='rect'):
         fact=GrapheneFactoryRectangular()
+        a_nn=lat_con/(2*np.sin(np.pi/3)) #compute nearest neighbor distance
         if (type(stacking).__module__ == 'numpy'):
             horz_shift[0:2]=stacking #insert x, y components
         elif (stacking=='AA'):
@@ -65,9 +92,7 @@ def make_layer(stacking,cell_type,n_1,n_2,lat_con,z_val,sym,mass):
             horz_shift=np.array([a_nn,0.,0.])
         elif (stacking=='SP'):
             horz_shift=np.array([0.,lat_con/2,0.])
-        latticeconstant_a_nn_1=np.array([3,2*np.sin(np.pi/3),1]) #lattice constants to scale unit cell from 1x1x1 such that afterwards the nearest neighbor distances are all 1
-        scale_x_y_z=np.array([a_nn,a_nn,1])
-        latticeconstant_scaled=tuple(scale_x_y_z*latticeconstant_a_nn_1) #scale up a_nn=1 unit cell by a_nn computed from lattice constant
+        latticeconstant_scaled = tuple(np.array([3*a_nn,lat_con,1.])) #lengths of 3 lattice vectors
         layer=fact(directions=[[1,0,0],[0,1,0],[0,0,1]],
                    size=(n_1,n_2,1),
                    latticeconstant=latticeconstant_scaled,
@@ -76,8 +101,25 @@ def make_layer(stacking,cell_type,n_1,n_2,lat_con,z_val,sym,mass):
         n_atoms_layer=layer.get_masses().shape[0] #extract number of atoms in layer
         layer.set_masses(mass*np.ones(n_atoms_layer)) #set masses to mass (rather than ASE default by symbol)
     elif (cell_type=='hex'):
-        print('ERROR: hexagonal unit cells not yet implemented')
-
+        fact = GrapheneFactoryTriclinic()
+        a_nn = (np.sqrt(2*(1+np.cos(np.pi/3)))/3)*lat_con #compute nearest neighbor distance
+        if (type(stacking).__module__ == 'numpy'):
+            horz_shift[0:2]=stacking #insert x, y components
+        elif (stacking=='AA'):
+            horz_shift=np.array([0.,0.,0.])
+        elif (stacking=='AB'):
+            horz_shift=np.array([0.,a_nn,0.])
+        elif (stacking=='SP'):
+            horz_shift=np.array([lat_con/2,0.,0.])
+        triclinic_side_lengths = np.array([lat_con,lat_con,1.])
+        triclinic_angles = np.array([90,90,60]) #[alpha, beta, gamma]
+        triclinic_cell_info = tuple(np.hstack((triclinic_side_lengths,triclinic_angles)))
+        layer=fact(size=(n_1,n_2,1),
+                   latticeconstant=triclinic_cell_info,
+                   symbol=sym)
+        layer.translate(horz_shift+vert_shift) #shift layer according to stacking and z_val
+        n_atoms_layer=layer.get_masses().shape[0] #extract number of atoms in layer
+        layer.set_masses(mass*np.ones(n_atoms_layer)) #set masses to mass (rather than ASE default by symbol)
     return layer
 
 
@@ -113,9 +155,16 @@ def make_graphene(stacking,cell_type,n_layer,n_1,n_2,lat_con,a_nn=None,sep=None,
 
     n_layer=int(n_layer) #clean input
 
+    #check errors in cell_type
+    if (cell_type not in ['rect','hex']):
+        print('ERROR: only rectangular and hexagonal unit cells supported')
+        return
+
     #optionally use a_nn to override lat_con
-    if (a_nn):
+    if ((a_nn) and (cell_type == 'rect')):
         lat_con=2*a_nn*np.sin(np.pi/3)
+    elif ((a_nn) and (cell_type == 'hex')):
+        lat_con = (3/np.sqrt(2*(1+np.cos(np.pi/3))))*a_nn
 
     #check errors in stacking (make into list if necessary)
     if (type(stacking).__module__ == 'numpy'):
@@ -145,11 +194,6 @@ def make_graphene(stacking,cell_type,n_layer,n_1,n_2,lat_con,a_nn=None,sep=None,
     else:
         print('ERROR: stacking input must be string, list of strings, or numpy \
 array with shape (n_layers-1,2)')
-
-    #check errors in cell_type
-    if (cell_type not in ['rect','hex']):
-        print('ERROR: only rectangular and hexagonal unit cells supported')
-        return
 
     #check errors in sep (turn into list if necessary)
     if (n_layer == 1):
@@ -193,8 +237,7 @@ array with shape (n_layers-1,2)')
     else:
         print('ERROR: optional mass inputs must be list or numeric')
 
-            
-    #create specified geometry
+    #create specified geometry layer by layer
     atoms=make_layer(stacking[0],cell_type,n_1,n_2,lat_con,z_abs[0],sym[0],mass[0]) #make monolayer as atoms
     #add layers on top on at a time
     for i_layer in range(1,n_layer):
@@ -206,18 +249,18 @@ array with shape (n_layers-1,2)')
         atoms.set_cell(cur_cell)
 
     #add vacuum layer of h_vac around outermost layers
-    if h_vac: 
+    #vacuum layer failing when n_layer = 1?????
+    if (h_vac): 
         #TURN OFF Z PERIODICITY WHEN PERIODICITY IS ADDRESSED
         cur_cell=atoms.get_cell()
         cur_cell[2]=z_abs[i_layer]*np.eye(3)[:,2] #not z-periodic, remove assumed periodic space
         atoms.set_cell(cur_cell)
-        z_last=z_abs[-1] #height of last layer
         tot_vac=2*h_vac #total thickness of vacuum layer
-        ase.build.add_vacuum(atoms,tot_vac) #all vacuum layer added to top
+        ase.build.add_vacuum(atoms,tot_vac) #doubly thick vacuum layer added to top
         coords=atoms.get_positions()
         n_atoms=coords.shape[0] #get number of atoms
         coords[:,2]+=h_vac*np.ones(n_atoms) #shift atoms up in vacuum so it's symmetric about center
-        atoms.set_positions(coords) #rewrite "vacuum-centered coordinates"
+        atoms.set_positions(coords) #rewrite "vacuum-centered" coordinates
 
     return atoms
 
@@ -230,8 +273,11 @@ if (__name__=="__main__"):
     atoms=make_graphene(stacking=['AB','AA'],cell_type='rect',n_layer=3,
 		        n_1=3,n_2=3,lat_con=0.0,a_nn=1.5,sep=[1.0,1.0],
                         sym=['C','C','C'],mass=[12,12,12])
-    """
 
-    atoms=make_graphene(stacking='SP',cell_type='rect',n_layer=2,
+    atoms=make_graphene(stacking='SP',cell_type='rect',n_layer=1,
 		        n_1=3,n_2=3,lat_con=0.0,a_nn=1.5,sep=2.0,h_vac=3.0)
+    """
+    atoms=make_graphene(stacking='AA',cell_type='rect',n_layer=2,
+		        n_1=1,n_2=1,lat_con=0.0,a_nn=1.5,sep=2.0,h_vac=3.0)
+    print(atoms.get_positions())
     ase.visualize.view(atoms)
