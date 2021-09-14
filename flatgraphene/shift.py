@@ -8,10 +8,6 @@ from ase.lattice.hexagonal import HexagonalFactory
 from ase.visualize import view
 
 
-"""
--single layer breaks something inside ASE
-"""
-
 
 class GrapheneFactoryRectangular(SimpleOrthorhombicFactory):
     """
@@ -123,7 +119,7 @@ def make_layer(stacking,cell_type,n_1,n_2,lat_con,z_val,sym,mass):
     return layer
 
 
-def make_graphene(stacking,cell_type,n_layer,n_1,n_2,lat_con,a_nn=None,sep=None,sym='C',mass=12.01,h_vac=None):
+def make_graphene(stacking,cell_type,n_1,n_2,lat_con,n_layer,sep,a_nn=None,sym='C',mass=12.01,h_vac=None):
     """
     Generates untwisted, uncorrugated graphene and returns ASE atoms object
     with specified graphene's geometry
@@ -135,14 +131,15 @@ def make_graphene(stacking,cell_type,n_layer,n_1,n_2,lat_con,a_nn=None,sep=None,
               *NOTE*: single string inputs result in the input string
                       alternated with 'AA' for n_layers
     cell_type: unit cell type, 'rect' or 'hex', string
-    n_layer: number of graphene layers, integer
     n_1: number of unit cells in x direction, integer
     n_2: number of unit cells in y direction, integer
     lat_con: in-plane lattice constant, float [Angstroms]
+    n_layer: number of graphene layers, integer
+    sep: interlayer separation(s) for n_layer>1, n_layer list of separations
+         (relative to layer below) or float (uniform separations)
+         last element specifies distance between top layer and top surface of box
     a_nn: optional argument to specify distance between
           nearest neighbors and override lat_con, float [Angstroms]
-    sep: interlayer separation(s) for n_layer>1, n_layer-1 list of separations
-         (relative to layer below) or float (uniform separations)
     sym: optional atomic symbol(s), list of length n_layer containing
          characters/strings or single character/string if same symbol
          for every layer
@@ -152,8 +149,6 @@ def make_graphene(stacking,cell_type,n_layer,n_1,n_2,lat_con,a_nn=None,sep=None,
     ---Output---
     atoms: graphene stack, ASE atoms object
     """
-
-    n_layer=int(n_layer) #clean input
 
     #check errors in cell_type
     if (cell_type not in ['rect','hex']):
@@ -195,27 +190,30 @@ def make_graphene(stacking,cell_type,n_layer,n_1,n_2,lat_con,a_nn=None,sep=None,
         print('ERROR: stacking input must be string, list of strings, or numpy \
 array with shape (n_layers-1,2)')
 
-    #check errors in sep (turn into list if necessary)
-    if (n_layer == 1):
-        z_abs=np.array([0.0]) #monolayer z height
-    elif (n_layer > 1):
-        if (not sep):
-            print('ERROR: multilayer systems require optional input sep')
-            return
-        elif (isinstance(sep,list)):
-            if (len(sep) != (n_layer-1)):
-                print('ERROR: specifying sep as list requires list length n_layer-1')
-                return
-            else:
-                sep_input=np.array([0.0]+sep,dtype=float) #snuck in leading 0.0 for first layer
-                z_abs=np.empty(sep_input.shape[0],dtype=float)
-                for i_sep in range(z_abs.shape[0]): #compute offsets relateive to bottom layer
-                    z_abs[i_sep]=np.sum(sep_input[0:i_sep+1])
-        elif (isinstance(sep,(float,int))):
-            sep_input=np.array([0.0]+[sep]*(n_layer-1),dtype=float) #sneak in 0.0
-            z_abs=sep*np.arange(n_layer) #[0, sep, 2*sep, ...]
-    else:
+    #check n_layer
+    if (not (n_layer - int(n_layer) == 0.0 )):
         print('ERROR: n_layer must be a positive integer')
+        return
+    else:
+        n_layer = int(n_layer) #clean input
+
+    #check errors in sep (turn into list if necessary)
+    if (not sep):
+        print('ERROR: sep required even for monolayer (to specify z height of box)')
+        return
+    elif (isinstance(sep,list)):
+        if (len(sep) != n_layer):
+            print('ERROR: specifying sep as list requires list length n_layer')
+            return
+        else:
+            sep_input=np.array([0.0]+sep,dtype=float) #sneak in leading 0.0 for first layer
+            z_abs=np.empty(sep_input.shape[0],dtype=float)
+            for i_sep in range(z_abs.shape[0]): #compute offsets relative to bottom layer
+                z_abs[i_sep]=np.sum(sep_input[0:i_sep+1])
+    elif (isinstance(sep,(float,int))):
+        sep_input=np.array([0.0]+[sep]*(n_layer-1),dtype=float) #sneak in 0.0
+        z_abs=sep*np.arange(n_layer+1) #[0, sep, 2*sep, ...]
+    print(z_abs)
 
     #check errors in sym
     if (isinstance(sym,list)):
@@ -238,28 +236,28 @@ array with shape (n_layers-1,2)')
         print('ERROR: optional mass inputs must be list or numeric')
 
     #create specified geometry layer by layer
-    atoms=make_layer(stacking[0],cell_type,n_1,n_2,lat_con,z_abs[0],sym[0],mass[0]) #make monolayer as atoms
+    #atoms=make_layer(stacking[0],cell_type,n_1,n_2,lat_con,z_abs[0],sym[0],mass[0]) #make monolayer as atoms
     #add layers on top on at a time
-    for i_layer in range(1,n_layer):
-        #add new atoms to object
-        atoms+=make_layer(stacking[i_layer],cell_type,n_1,n_2,lat_con,z_abs[i_layer],sym[i_layer],mass[i_layer]) 
+    for i_layer in range(0,n_layer):
+        if (i_layer == 0): #create new atoms object
+            atoms = make_layer(stacking[i_layer],cell_type,n_1,n_2,lat_con,z_abs[i_layer],sym[i_layer],mass[i_layer]) 
+        else: #add atoms to object
+            atoms += make_layer(stacking[i_layer],cell_type,n_1,n_2,lat_con,z_abs[i_layer],sym[i_layer],mass[i_layer]) 
         #adjust z-height of simulation cell
         cur_cell=atoms.get_cell()
-        cur_cell[2]=(z_abs[i_layer]+sep_input[i_layer])*np.eye(3)[:,2] #set z-height as vector, set buffer above to previous interlayer separation (fine in most cases)
+        cur_cell[2]=z_abs[i_layer+1]*np.eye(3)[:,2] #set z-height as vector, set buffer above to previous interlayer separation (fine in most cases)
         atoms.set_cell(cur_cell)
 
     #add vacuum layer of h_vac around outermost layers
-    #vacuum layer failing when n_layer = 1?????
     if (h_vac): 
         #TURN OFF Z PERIODICITY WHEN PERIODICITY IS ADDRESSED
         cur_cell=atoms.get_cell()
         cur_cell[2]=z_abs[i_layer]*np.eye(3)[:,2] #not z-periodic, remove assumed periodic space
+        cur_cell[2] += 2*h_vac*np.eye(3)[:,2] #add full thickness of vacuum on top
         atoms.set_cell(cur_cell)
-        tot_vac=2*h_vac #total thickness of vacuum layer
-        ase.build.add_vacuum(atoms,tot_vac) #doubly thick vacuum layer added to top
         coords=atoms.get_positions()
         n_atoms=coords.shape[0] #get number of atoms
-        coords[:,2]+=h_vac*np.ones(n_atoms) #shift atoms up in vacuum so it's symmetric about center
+        coords[:,2]+=h_vac*np.ones(n_atoms) #shift atoms up so vacuum symmetric about center
         atoms.set_positions(coords) #rewrite "vacuum-centered" coordinates
 
     return atoms
@@ -267,17 +265,21 @@ array with shape (n_layers-1,2)')
         
 
 if (__name__=="__main__"):
-    """
-    atoms=make_graphene(stacking='AB',cell_type='rect',n_layer=3,
-		        n_1=3,n_2=3,lat_con=0.0,a_nn=1.5,sep=1.0,sym='C',mass=12)
-    atoms=make_graphene(stacking=['AB','AA'],cell_type='rect',n_layer=3,
-		        n_1=3,n_2=3,lat_con=0.0,a_nn=1.5,sep=[1.0,1.0],
-                        sym=['C','C','C'],mass=[12,12,12])
-
-    atoms=make_graphene(stacking='SP',cell_type='rect',n_layer=1,
-		        n_1=3,n_2=3,lat_con=0.0,a_nn=1.5,sep=2.0,h_vac=3.0)
-    """
-    atoms=make_graphene(stacking='AA',cell_type='rect',n_layer=2,
-		        n_1=1,n_2=1,lat_con=0.0,a_nn=1.5,sep=2.0,h_vac=3.0)
+    #example to modify when working on module
+    atoms=make_graphene(stacking='AA',cell_type='hex',n_layer=2,
+		        n_1=1,n_2=1,lat_con=0.0,a_nn=1.5,sep=2.0)
     print(atoms.get_positions())
     ase.visualize.view(atoms)
+
+
+
+
+
+
+
+
+
+
+
+
+
