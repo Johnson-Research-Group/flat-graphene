@@ -126,8 +126,8 @@ def make_graphene(stacking,cell_type,n_1,n_2,lat_con,n_layer,sep,a_nn=None,sym='
     ---Input---
     stacking: specification of stacking for layers above first,
               ('AA','AB','SP') relative to first layer,
-              numpy array of shape (n_layer-1,2), list of strings
-              or single string
+              single string, or list of strings, or numpy array of shape
+	      (n_layer-1,2)
               *NOTE*: single string inputs result in the input string
                       alternated with 'AA' for n_layers
     cell_type: unit cell type, 'rect' or 'hex', string
@@ -213,7 +213,6 @@ array with shape (n_layers-1,2)')
     elif (isinstance(sep,(float,int))):
         sep_input=np.array([0.0]+[sep]*(n_layer-1),dtype=float) #sneak in 0.0
         z_abs=sep*np.arange(n_layer+1) #[0, sep, 2*sep, ...]
-    print(z_abs)
 
     #check errors in sym
     if (isinstance(sym,list)):
@@ -270,16 +269,6 @@ if (__name__=="__main__"):
 		        n_1=1,n_2=1,lat_con=0.0,a_nn=1.5,sep=2.0)
     print(atoms.get_positions())
     ase.visualize.view(atoms)
-
-
-
-
-
-
-
-
-
-
 
 
 

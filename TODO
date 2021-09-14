@@ -1,5 +1,5 @@
 
 To do:
-   -figure out why single layers systems break at final vacuum shift step
-   -figure out why multiletter symbols aren't allowed, 'Cu' terminates without error but 'C' and 'B' are fine
-   -work on twist.py if Tawfiq doesn't
+   - figure out why multiletter symbols aren't allowed, 'Cu' terminates without error but 'C' and 'B' are fine
+   - work on twist.py if Tawfiq doesn't
+   - don't forget periodic boundary conditions (do I need to/how to tell LAMMPS?)
