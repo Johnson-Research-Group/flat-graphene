@@ -10,7 +10,7 @@ Non-twisted (shfited) graphene may be created using the `shift.make_graphene` fu
 ```python
 #in flatgraphene/shift.py
 def make_graphene(stacking,cell_type,n_1,n_2,lat_con,n_layer,sep,
-				  a_nn=None,sym='C',mass=12.01,h_vac=None):
+                  a_nn=None,sym='C',mass=12.01,h_vac=None):
     """
     Generates untwisted, uncorrugated graphene and returns ASE atoms object
     with specified graphene's geometry
