@@ -59,7 +59,7 @@ def make_layer(stacking,cell_type,n_1,n_2,lat_con,z_val,sym,mass):
     according to its stacking and z_value
     ---Input---
     stacking: specification of stacking for layers above first,
-              ('AA','AB','SP') relative to first layer,
+              ('A','B','SP') relative to first layer,
               numpy array of shape (n_layer-1,2), list of strings
               or single string
     cell_type: unit cell type, 'rect' or 'hex', string
@@ -82,9 +82,9 @@ def make_layer(stacking,cell_type,n_1,n_2,lat_con,z_val,sym,mass):
         a_nn=lat_con/(2*np.sin(np.pi/3)) #compute nearest neighbor distance
         if (type(stacking).__module__ == 'numpy'):
             horz_shift[0:2]=stacking #insert x, y components
-        elif (stacking=='AA'):
+        elif (stacking=='A'):
             horz_shift=np.array([0.,0.,0.])
-        elif (stacking=='AB'):
+        elif (stacking=='B'):
             horz_shift=np.array([a_nn,0.,0.])
         elif (stacking=='SP'):
             horz_shift=np.array([0.,lat_con/2,0.])
@@ -101,9 +101,9 @@ def make_layer(stacking,cell_type,n_1,n_2,lat_con,z_val,sym,mass):
         a_nn = (np.sqrt(2*(1+np.cos(np.pi/3)))/3)*lat_con #compute nearest neighbor distance
         if (type(stacking).__module__ == 'numpy'):
             horz_shift[0:2]=stacking #insert x, y components
-        elif (stacking=='AA'):
+        elif (stacking=='A'):
             horz_shift=np.array([0.,0.,0.])
-        elif (stacking=='AB'):
+        elif (stacking=='B'):
             horz_shift=np.array([0.,a_nn,0.])
         elif (stacking=='SP'):
             horz_shift=np.array([lat_con/2,0.,0.])
@@ -125,11 +125,11 @@ def make_graphene(stacking,cell_type,n_1,n_2,lat_con,n_layer,sep,a_nn=None,sym='
     with specified graphene's geometry
     ---Input---
     stacking: specification of stacking for layers above first,
-              ('AA','AB','SP') relative to first layer,
+              ('A','B','SP') relative to first layer,
               single string, or list of strings, or numpy array of shape
 	      (n_layer-1,2)
               *NOTE*: single string inputs result in the input string
-                      alternated with 'AA' for n_layers
+                      alternated with 'A' for n_layers
     cell_type: unit cell type, 'rect' or 'hex', string
     n_1: number of unit cells in x direction, integer
     n_2: number of unit cells in y direction, integer
@@ -164,30 +164,21 @@ def make_graphene(stacking,cell_type,n_1,n_2,lat_con,n_layer,sep,a_nn=None,sym='
     #check errors in stacking (make into list if necessary)
     if (type(stacking).__module__ == 'numpy'):
         if (stacking.shape != (n_layer-1,2)):
-            print('ERROR: specifying stacking as numpy array requires shape (n_layer-1,2)')
+            print('ERROR: specifying stacking as numpy array requires shape (n_layer,2)')
             return
         else:
             stacking = np.vstack((np.zeros(2),stacking)) #add "hidden" AA stacking for bottom layer
     elif (isinstance(stacking,list)):
-        if (len(stacking) != (n_layer-1) ):
-            print('ERROR: specifying stacking as list of strings requires list of length n_layer-1')
+        if (len(stacking) != n_layer ):
+            print('ERROR: specifying stacking as list of strings requires list of length n_layer')
             return
         else:
-            stacking=['AA']+stacking #add "hidden" 'AA' stacking for bottom layer
-    elif (isinstance(stacking,str)):
-          if (stacking not in ['AA','AB','SP']):
-            print('ERROR: stacking string not in {\'AA\',\'AB\',\'SP\'}')
-            return
-          else: #make string input into n_layer length string
-              stacking_string=stacking
-              stacking=[0]*(n_layer) #includes specification of bottom layer
-              for i_layer in range(len(stacking)):
-                  if (i_layer%2 == 0):
-                      stacking[i_layer]='AA'
-                  else:
-                      stacking[i_layer]=stacking_string
+            string_stackings = ['A','B','SP']
+            for elem in stacking:
+                if (elem not in string_stackings):
+                    print('ERROR: elements of list stacking must be in {\'A\',\'B\',\'SP\'}')
     else:
-        print('ERROR: stacking input must be string, list of strings, or numpy \
+        print('ERROR: stacking input must be a list of strings, or numpy \
 array with shape (n_layers-1,2)')
 
     #check n_layer
@@ -235,7 +226,6 @@ array with shape (n_layers-1,2)')
         print('ERROR: optional mass inputs must be list or numeric')
 
     #create specified geometry layer by layer
-    #atoms=make_layer(stacking[0],cell_type,n_1,n_2,lat_con,z_abs[0],sym[0],mass[0]) #make monolayer as atoms
     #add layers on top on at a time
     for i_layer in range(0,n_layer):
         if (i_layer == 0): #create new atoms object
@@ -265,7 +255,7 @@ array with shape (n_layers-1,2)')
 
 if (__name__=="__main__"):
     #example to modify when working on module
-    atoms=make_graphene(stacking='AA',cell_type='hex',n_layer=2,
+    atoms=make_graphene(stacking='A',cell_type='hex',n_layer=2,
 		        n_1=1,n_2=1,lat_con=0.0,a_nn=1.5,sep=2.0)
     print(atoms.get_positions())
     ase.visualize.view(atoms)

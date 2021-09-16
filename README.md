@@ -5,7 +5,7 @@ Python module to generate flat (uncorrugated) graphene configurations with one o
 
 ### Documentation
 
-Non-twisted (shfited) graphene may be created using the `shift.make_graphene` function, which returns an ASE atoms object. Parameters include cell type (rectangular or hexagonal), alignment (AA,AB,SP), number of unit cells (in-plane), interlayer spacing, and lattice constant.
+Non-twisted (shfited) graphene may be created using the `shift.make_graphene` function, which returns an ASE atoms object. Parameters include cell type (rectangular or hexagonal), alignment (A,B,SP), number of unit cells (in-plane), interlayer spacing, and lattice constant.
 
 ```python
 #in flatgraphene/shift.py
@@ -16,11 +16,11 @@ def make_graphene(stacking,cell_type,n_1,n_2,lat_con,n_layer,sep,
     with specified graphene's geometry
     ---Input---
     stacking: specification of stacking for layers above first,
-              ('AA','AB','SP') relative to first layer,
+              ('A','B','SP') relative to first layer,
               single string, or list of strings, or numpy array of shape
 			  (n_layer-1,2)
               *NOTE*: single string inputs result in the input string
-                      alternated with 'AA' for n_layers
+                      alternated with 'A' for n_layers
     cell_type: unit cell type, 'rect' or 'hex', string
     n_1: number of unit cells in x direction, integer
     n_2: number of unit cells in y direction, integer
@@ -46,7 +46,7 @@ Twisted graphene has not been officially implemented yet, though functions for i
 
 ### Examples
 
-This example creates an AB trilayer graphene system. Here AB means the odd layers have no in-plane shift relative to the bottom layer while even layers are shifted by a single nearest neighbor distance.
+This example creates an ABA trilayer graphene system. Any stacking designation (A,B,SP) is defined relative to the bottom layer in the stack. The bottom layer is assumed A, and when one string input is used for stacking, that input is alternated with A stacked layers.
 ```python
 import ase
 from ase.visualize import view
@@ -54,7 +54,7 @@ import flatgraphene as fg
 #note the inputs are all given with variable name for clarity, but this is not necessary
 #the nearest neighbor distance (in-plane) a_nn is optional, and overrides the lat_con variable
 #  meaning the value of lat_con is unused
-atoms=fg.shift.make_graphene(stacking='AB',cell_type='rect',n_1=3,n_2=3,
+atoms=fg.shift.make_graphene(stacking='B',cell_type='rect',n_1=3,n_2=3,
 					 lat_con=0.0,n_layer=3,sep=1.0,a_nn=1.5,
 		             sym='C',mass=12,h_vac=3.0)
 ase.visualize.view(atoms)
