@@ -178,8 +178,8 @@ def make_graphene(stacking,cell_type,n_1,n_2,lat_con,n_layer,sep,a_nn=None,sym='
                 if (elem not in string_stackings):
                     print('ERROR: elements of list stacking must be in {\'A\',\'B\',\'SP\'}')
     else:
-        print('ERROR: stacking input must be a list of strings, or numpy \
-array with shape (n_layers-1,2)')
+        print('ERROR: stacking input must be a list of strings or numpy array with \
+shape (n_layers-1,2)')
 
     #check n_layer
     if (not (n_layer - int(n_layer) == 0.0 )):
@@ -255,8 +255,8 @@ array with shape (n_layers-1,2)')
 
 if (__name__=="__main__"):
     #example to modify when working on module
-    atoms=make_graphene(stacking='A',cell_type='hex',n_layer=2,
-		        n_1=1,n_2=1,lat_con=0.0,a_nn=1.5,sep=2.0)
+    atoms=make_graphene(stacking=['B','A'],cell_type='rect',n_layer=2,
+		        n_1=1,n_2=1,lat_con=0.0,a_nn=1.5,sep=[2.0,3.0])
     print(atoms.get_positions())
     ase.visualize.view(atoms)
 
