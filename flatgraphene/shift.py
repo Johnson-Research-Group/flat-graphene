@@ -82,11 +82,13 @@ def make_layer(stacking,cell_type,n_1,n_2,lat_con,z_val,sym,mass):
         a_nn=lat_con/(2*np.sin(np.pi/3)) #compute nearest neighbor distance
         if (type(stacking).__module__ == 'numpy'):
             horz_shift[0:2]=stacking #insert x, y components
-        elif (stacking=='A'):
-            horz_shift=np.array([0.,0.,0.])
-        elif (stacking=='B'):
-            horz_shift=np.array([a_nn,0.,0.])
-        elif (stacking=='SP'):
+        elif (stacking == 'A'):
+            horz_shift = np.array([0.,0.,0.])
+        elif (stacking == 'B'):
+            horz_shift = np.array([a_nn,0.,0.])
+        elif (stacking == 'C'):
+            horz_shift = np.array([2*a_nn,0.,0.])
+        elif (stacking == 'SP'):
             horz_shift=np.array([0.,lat_con/2,0.])
         latticeconstant_scaled = tuple(np.array([3*a_nn,lat_con,1.])) #lengths of 3 lattice vectors
         layer=fact(directions=[[1,0,0],[0,1,0],[0,0,1]],
@@ -99,13 +101,18 @@ def make_layer(stacking,cell_type,n_1,n_2,lat_con,z_val,sym,mass):
     elif (cell_type=='hex'):
         fact = GrapheneFactoryTriclinic()
         a_nn = (np.sqrt(2*(1+np.cos(np.pi/3)))/3)*lat_con #compute nearest neighbor distance
+        lat_vec1 = lat_con*np.array([1.,0.,0.]) #"horizontal lattice vector
+        lat_vec2 = lat_con*np.array([np.cos(np.pi/3),np.sin(np.pi/3),0.])
         if (type(stacking).__module__ == 'numpy'):
             horz_shift[0:2]=stacking #insert x, y components
-        elif (stacking=='A'):
+        elif (stacking == 'A'):
             horz_shift=np.array([0.,0.,0.])
-        elif (stacking=='B'):
+        elif (stacking == 'B'):
             horz_shift=np.array([0.,a_nn,0.])
-        elif (stacking=='SP'):
+            horz_shift = (1/3)*lat_vec1 + (1/3)*lat_vec2
+        elif (stacking == 'C'):
+            horz_shift = 2*((1/3)*lat_vec1 + (1/3)*lat_vec2)
+        elif (stacking == 'SP'):
             horz_shift=np.array([lat_con/2,0.,0.])
         triclinic_side_lengths = np.array([lat_con,lat_con,1.])
         triclinic_angles = np.array([90,90,60]) #[alpha, beta, gamma]
@@ -173,7 +180,7 @@ def make_graphene(stacking,cell_type,n_1,n_2,lat_con,n_layer,sep,a_nn=None,sym='
             print('ERROR: specifying stacking as list of strings requires list of length n_layer')
             return
         else:
-            string_stackings = ['A','B','SP']
+            string_stackings = ['A','B','C','SP']
             for elem in stacking:
                 if (elem not in string_stackings):
                     print('ERROR: elements of list stacking must be in {\'A\',\'B\',\'SP\'}')
@@ -256,11 +263,9 @@ shape (n_layers-1,2)')
 
 if (__name__=="__main__"):
     #example to modify when working on module
-    atoms=make_graphene(stacking=['B','A'],cell_type='hex',n_layer=2,
-		        n_1=3,n_2=3,lat_con=0.0,a_nn=1.5,sep=[2.0,3.0])
-    print(atoms.get_positions())
+    atoms=make_graphene(stacking=['A','B','C'],cell_type='hex',n_layer=3,
+		        n_1=3,n_2=3,lat_con=0.0,a_nn=1.5,sep=3.0,sym=['B','C','N'])
     ase.visualize.view(atoms)
-    
 
 
 
