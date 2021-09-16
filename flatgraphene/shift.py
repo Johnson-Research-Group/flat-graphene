@@ -249,16 +249,18 @@ shape (n_layers-1,2)')
         coords[:,2]+=h_vac*np.ones(n_atoms) #shift atoms up so vacuum symmetric about center
         atoms.set_positions(coords) #rewrite "vacuum-centered" coordinates
 
+    atoms.wrap() #wrap atoms to make sure all are within defined box
     return atoms
 
         
 
 if (__name__=="__main__"):
     #example to modify when working on module
-    atoms=make_graphene(stacking=['B','A'],cell_type='rect',n_layer=2,
-		        n_1=1,n_2=1,lat_con=0.0,a_nn=1.5,sep=[2.0,3.0])
+    atoms=make_graphene(stacking=['B','A'],cell_type='hex',n_layer=2,
+		        n_1=3,n_2=3,lat_con=0.0,a_nn=1.5,sep=[2.0,3.0])
     print(atoms.get_positions())
     ase.visualize.view(atoms)
+    
 
 
 
