@@ -167,7 +167,7 @@ def make_graphene(stacking,cell_type,n_1,n_2,lat_con,n_layer,sep,a_nn=None,sym='
             print('ERROR: specifying stacking as numpy array requires shape (n_layer,2)')
             return
         else:
-            stacking = np.vstack((np.zeros(2),stacking)) #add "hidden" AA stacking for bottom layer
+            stacking = np.vstack((np.zeros(2),stacking)) #add "hidden" A stacking for bottom layer
     elif (isinstance(stacking,list)):
         if (len(stacking) != n_layer ):
             print('ERROR: specifying stacking as list of strings requires list of length n_layer')
