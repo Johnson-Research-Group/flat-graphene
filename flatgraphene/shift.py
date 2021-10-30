@@ -266,6 +266,3 @@ if (__name__=="__main__"):
     atoms=make_graphene(stacking=['A','B','C'],cell_type='hex',n_layer=3,
 		        n_1=3,n_2=3,lat_con=0.0,a_nn=1.5,sep=3.0,sym=['B','C','N'])
     ase.visualize.view(atoms)
-
-
-
