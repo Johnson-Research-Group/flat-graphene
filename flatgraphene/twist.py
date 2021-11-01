@@ -18,7 +18,7 @@ def rot_mat_z(theta):
                         [0, 0, 1]])
     return rot_mat
 
-def remove_atoms_outside_box(atoms_object):
+def remove_atoms_outside_cell(atoms_object):
     """
     Deletes all atoms outside of the box/cell of atoms_object
     ---Inputs---
@@ -28,13 +28,10 @@ def remove_atoms_outside_box(atoms_object):
     """
     original_positions = atoms_object.get_positions()
     temp_atoms_object = copy.deepcopy(atoms_object)
-
-    #wrap atoms around lattice vectors
     temp_atoms_object.wrap()
     wrapped_positions = temp_atoms_object.get_positions()
-
     out_of_bounds_indices = [atoms_object[i].index for i in range(original_positions.shape[0])
-                           if (not np.allclose(original_positions[i],wrapped_positions[i]))] #indices of atoms which are out of bounds
+                           if (not np.allclose(original_positions[i],wrapped_positions[i]))]
     del atoms_object[out_of_bounds_indices] #remove out of bounds atoms by known index
 
 
@@ -105,9 +102,6 @@ def make_graphene(cell_type,p,q,lat_con,n_layer,sep,a_nn=None,sym='C',mass=12.01
 
     """
     NOTES ON CURRENT APPROACH:
-    - I can't just generate a raw cell then rotate, wrap, and rotate, wrap because the lattice vectors of the untwisted system and the less twisted system are not the same length
-    - at least I can't without first generating an initially larger system, then cutting atoms out
-    - generating initially large system seems okay for now, but need to make sure that end of first lattice vector of less twisted system aligns perfectly with an atoms as in Shallcross paper
     - you'll want to use n vector to determine dyanmically how much overage to create in the non-twisted cell
     ALTERNATIVELY:
     - could I find a way to systematically/analytically generate the first, less twisted cell, then proceed to use the rotate and wrap strategy?
@@ -120,9 +114,8 @@ def make_graphene(cell_type,p,q,lat_con,n_layer,sep,a_nn=None,sym='C',mass=12.01
 
     #get angle between sheet with first lattice vector along x, and sheet with first lattice vector
     lat_vec_mat_nontwisted = nontwisted_cell[:2,:2].T/magic_size #matrix of 2D lattice vectors from box vectors, one per column
-    print(nontwisted_cell)
-    print(lat_vec_mat_nontwisted)
-    n_loc = lat_vec_mat_nontwisted@n #convert from number of lattice hops (vector n) to actual spatial position, also first box vector of twisted cell
+    n_loc = lat_vec_mat_nontwisted@n #convert from number of lattice hops (vector n) to actual spatial position, also first box vector of less twisted cell
+    m_loc = lat_vec_mat_nontwisted@m #convert from number of lattice hops (vector m) to actual spatial position, also first box vector of more twisted cell
 
     theta_nontwisted_less = np.arccos(np.dot(n_loc,np.eye(2)[0])/np.linalg.norm(n_loc)) #angle between unrotated sheet and lesser rotated sheet
 
@@ -143,19 +136,27 @@ def make_graphene(cell_type,p,q,lat_con,n_layer,sep,a_nn=None,sym='C',mass=12.01
     less_twisted_cell[:2,:2] = np.array([n_loc,n_loc_rot_60])
     less_twisted_sheet.set_cell(less_twisted_cell)
     ase.visualize.view(less_twisted_sheet)
-    remove_atoms_outside_box(less_twisted_sheet)
-    print(less_twisted_sheet.get_positions().shape[0])
-    #less_twisted_sheet.wrap() #wrap atoms back across new box vectors
+    remove_atoms_outside_cell(less_twisted_sheet) #trim extra atoms outside cell
+
+    #CONSTRUCT MORE TWISTED SHEET
+    magic_x_shift_multiplier = 2 #replace this with something dynamic on n vector
+    more_twisted_sheet = copy.deepcopy(nontwisted_sheet)
+    #shift atoms so that cell vectors do not start at left edge
+    unshifted_positions = more_twisted_sheet.get_positions()
+    num_atoms_unshifted = unshifted_positions.shape[0]
+    shift_vec = np.zeros(3)
+    shift_vec[:2] = magic_x_shift_multiplier*lat_vec_mat_nontwisted[:,0]
+    shift_array = np.tile(shift_vec,(num_atoms_unshifted,1))
+    shifted_positions = unshifted_positions - shift_array
+    more_twisted_sheet.set_positions(shifted_positions)
+    #set proper lattice vectors
+    m_loc_rot_60 = rot_mat_z(np.pi/3)[:2,:2]@m_loc #second box vector of more twisted cell
+    more_twisted_cell = np.eye(3)
+    more_twisted_cell[:2,:2] = np.array([m_loc,m_loc_rot_60])
+    more_twisted_sheet.set_cell(more_twisted_cell)
+    ase.visualize.view(more_twisted_sheet)
+    remove_atoms_outside_cell(more_twisted_sheet) #trim extra atoms outside cell
                               
-
-    #normal_sheet = generate one normal layer of graphene as atoms object, n_max=m_max=max(n vector)
-    #twisted_1 = copy(normal_sheet)
-    #rotate twisted_1's lattice vectors by angle between n vector and [1,0]
-    #wrap atoms of twisted_1 since lattice vectors have changed
-    #twisted_2 = copy(twisted_1)
-    #rotate twisted_2's lattice vectors by theta
-    #wrap atoms of twisted_2 since lattice vectors have changed
-
 
     print('theta (degrees):',theta*(180/np.pi))
     print('n:',n)
@@ -163,6 +164,7 @@ def make_graphene(cell_type,p,q,lat_con,n_layer,sep,a_nn=None,sym='C',mass=12.01
     print('theta_normal_1 (degrees):',theta_nontwisted_less*(180/np.pi))
     #ase.visualize.view(nontwisted_sheet)
     ase.visualize.view(less_twisted_sheet)
+    ase.visualize.view(more_twisted_sheet)
 
 if (__name__=="__main__"):
     #example to modify when working on module
