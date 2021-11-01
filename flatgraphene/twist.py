@@ -102,22 +102,33 @@ def make_graphene(cell_type,p,q,lat_con,n_layer,sep,a_nn=None,sym='C',mass=12.01
 
     """
     NOTES ON CURRENT APPROACH:
-    - you'll want to use n vector to determine dyanmically how much overage to create in the non-twisted cell
+    - estimate of oversized cell needs some refining, still may leave out an atom or two
     ALTERNATIVELY:
     - could I find a way to systematically/analytically generate the first, less twisted cell, then proceed to use the rotate and wrap strategy?
     """
 
-    #GENERATE LESS TWISTED SHEET (with first box vector along [1,0,0])
-    magic_size = 5 #magic variable, get rid of by setting dynamically large cell via check of n vector
-    nontwisted_sheet = shift.make_layer('A','hex',magic_size,magic_size,lat_con,z_temp,sym_temp,mass_temp) #sheet with first lattice vector in x direction
-    nontwisted_cell = np.array(nontwisted_sheet.get_cell()) #extract box/cell vectors
+    #DETERMINE SIZE OF OVERSIZED UNTWISTED SHEET
+    single_cell = shift.make_layer('A','hex',1,1,lat_con,1.0,'C',12.01) #sheet with first lattice vector in x direction
+    nontwisted_cell = single_cell.get_cell() #extract box/cell vectors
 
-    #get angle between sheet with first lattice vector along x, and sheet with first lattice vector
-    lat_vec_mat_nontwisted = nontwisted_cell[:2,:2].T/magic_size #matrix of 2D lattice vectors from box vectors, one per column
+    lat_vec_mat_nontwisted = nontwisted_cell[:2,:2].T #matrix of 2D lattice vectors from box vectors, one per column
     n_loc = lat_vec_mat_nontwisted@n #convert from number of lattice hops (vector n) to actual spatial position, also first box vector of less twisted cell
     m_loc = lat_vec_mat_nontwisted@m #convert from number of lattice hops (vector m) to actual spatial position, also first box vector of more twisted cell
+    rot_mat_60 = rot_mat_z(np.pi/3)[:2,:2] #matrix to generate 60 degree rotation about z-axis
+    x_range = (n_loc + rot_mat_60@n_loc)[0] - min(0,(rot_mat_60@m_loc)[0]) #size of necessary oversized system in x direction, [A]
+    y_range = (m_loc + rot_mat_60@m_loc)[1] #size of necessary oversized system in y direction, [A]
+    n_x = np.round(x_range/lat_vec_mat_nontwisted[0,0]) + 3
+    n_y = np.round(y_range/lat_vec_mat_nontwisted[1,1]) + 2
+    n_x = int(n_x)
+    n_y = int(n_y)
+    print('x_range:',x_range)
+    print('n_x:',n_x)
+    print('y_range:',y_range)
+    print('n_y:',n_y)
 
-    theta_nontwisted_less = np.arccos(np.dot(n_loc,np.eye(2)[0])/np.linalg.norm(n_loc)) #angle between unrotated sheet and lesser rotated sheet
+    #GENERATE OVERSIZED NONTWISTED SHEET (with first box vector along [1,0,0])
+    nontwisted_sheet = shift.make_layer('A','hex',n_x,n_y,lat_con,z_temp,sym_temp,mass_temp) #sheet with first lattice vector in x direction
+    theta_nontwisted_less = np.arccos(np.dot(n_loc,np.eye(2)[0])/np.linalg.norm(n_loc)) #angle between unrotated sheet with lattice vector along [1,0,0] and lesser rotated sheet with first lattice vector along n_loc
 
     #CONTRUCT LESS TWISTED SHEET
     less_twisted_sheet = copy.deepcopy(nontwisted_sheet)
@@ -125,27 +136,28 @@ def make_graphene(cell_type,p,q,lat_con,n_layer,sep,a_nn=None,sym='C',mass=12.01
     unshifted_positions = less_twisted_sheet.get_positions()
     num_atoms_unshifted = unshifted_positions.shape[0]
     shift_vec = np.zeros(3)
-    magic_x_shift_multiplier = 1 #replace this with something dynamic on n vector
-    shift_vec[:2] = magic_x_shift_multiplier*lat_vec_mat_nontwisted[:,0]
+    x_shift_multiplier = np.round((rot_mat_60@n_loc)[1]/(np.tan(np.pi/3)*lat_vec_mat_nontwisted[0,0])) + 1
+    x_shift_multiplier = int(x_shift_multiplier)
+    shift_vec[:2] = x_shift_multiplier*lat_vec_mat_nontwisted[:,0]
     shift_array = np.tile(shift_vec,(num_atoms_unshifted,1))
     shifted_positions = unshifted_positions - shift_array
     less_twisted_sheet.set_positions(shifted_positions)
     #set proper lattice vectors
-    n_loc_rot_60 = rot_mat_z(np.pi/3)[:2,:2]@n_loc #second box vector of less twisted cell
     less_twisted_cell = np.eye(3)
-    less_twisted_cell[:2,:2] = np.array([n_loc,n_loc_rot_60])
+    less_twisted_cell[:2,:2] = np.array([n_loc,rot_mat_60@n_loc])
     less_twisted_sheet.set_cell(less_twisted_cell)
     ase.visualize.view(less_twisted_sheet)
     remove_atoms_outside_cell(less_twisted_sheet) #trim extra atoms outside cell
 
     #CONSTRUCT MORE TWISTED SHEET
-    magic_x_shift_multiplier = 2 #replace this with something dynamic on n vector
     more_twisted_sheet = copy.deepcopy(nontwisted_sheet)
     #shift atoms so that cell vectors do not start at left edge
     unshifted_positions = more_twisted_sheet.get_positions()
     num_atoms_unshifted = unshifted_positions.shape[0]
+    x_shift_multiplier = np.round((rot_mat_60@m_loc)[1]/(np.tan(np.pi/3)*lat_vec_mat_nontwisted[0,0])) + 1
+    x_shift_multiplier = int(x_shift_multiplier)
     shift_vec = np.zeros(3)
-    shift_vec[:2] = magic_x_shift_multiplier*lat_vec_mat_nontwisted[:,0]
+    shift_vec[:2] = x_shift_multiplier*lat_vec_mat_nontwisted[:,0]
     shift_array = np.tile(shift_vec,(num_atoms_unshifted,1))
     shifted_positions = unshifted_positions - shift_array
     more_twisted_sheet.set_positions(shifted_positions)
@@ -167,7 +179,14 @@ def make_graphene(cell_type,p,q,lat_con,n_layer,sep,a_nn=None,sym='C',mass=12.01
     ase.visualize.view(more_twisted_sheet)
 
 if (__name__=="__main__"):
-    #example to modify when working on module
+    #example(s) to modify when working on module
+    """
+    #27.78 degrees
     make_graphene(cell_type='hex',n_layer=1,
 		  p=1,q=3,lat_con=0.0,a_nn=1.5,
+                  sep=1)
+    """
+    #??? degrees
+    make_graphene(cell_type='hex',n_layer=1,
+		  p=2,q=7,lat_con=0.0,a_nn=1.5,
                   sep=1)
