@@ -20,14 +20,17 @@ def rot_mat_z(theta):
 
 def remove_atoms_outside_box(atoms_object):
     """
-    Deletes all atoms outside of the box/cell of atoms_object
-    ---Inputs---
-    atoms_object : {ASE atoms object}
-    ---Outputs---
-    NONE, atoms_object is edited directly
+    Deletes all atoms outside of the box/cell of atoms_object.
     """
     original_positions = atoms_object.get_positions()
     temp_atoms_object = copy.deepcopy(atoms_object)
+    print('cell before: ',temp_atoms_object.get_cell())
+    original_cell = temp_atoms_object.get_cell()
+    cell_growth = np.zeros((3,3))
+    cell_growth[0,:2] += 0.01*np.ones(2) #grow first lattice vector slightly in [1,0,0], [0,1,0]
+    cell_growth[1,:2] += 0.02*np.ones(2) #grow second lattice vector slightly in [1,0,0], [0,1,0]
+    temp_atoms_object.set_cell(original_cell + cell_growth)
+    print('cell after: ',temp_atoms_object.get_cell())
 
     #wrap atoms around lattice vectors
     temp_atoms_object.wrap()
