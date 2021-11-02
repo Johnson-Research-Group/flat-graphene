@@ -2,10 +2,7 @@
 import copy
 import numpy as np
 import ase
-import shift
-from ase.lattice.orthorhombic import SimpleOrthorhombicFactory
-from ase.lattice.triclinic import TriclinicFactory
-from ase.lattice.hexagonal import HexagonalFactory
+from flatgraphene import shift
 from ase.visualize import view
 
 def rot_mat_z(theta):
@@ -19,6 +16,32 @@ def rot_mat_z(theta):
     return rot_mat
 
 
+def find_p_q(theta_deg,q_max=100,a_tol=1e-2):
+    """
+    Computes the p_q that generate a twist of theta radians
+    ---Inputs---
+    theta_deg : {float}
+        desired twist angle, [angular degrees]
+    q_max : {integer}
+        q >= p > 0, so q_max controls how many pairs are checked
+    a_tol : {float}
+        acceptable absolute difference between computed angle and desired angle
+    ---Outputs---
+    p : {integer}
+        p value from "Electronic structure of turbostratic graphene" by Shallcross et al
+    q : {integer}
+        q value from "Electronic structure of turbostratic graphene" by Shallcross et al
+    """
+    for p in range(1,q_max+1):
+        for q in range(p,q_max+1):
+            theta_comp_rad = np.arccos((3*np.power(q,2) - np.power(p,2))/(3*np.power(q,2) + np.power(p,2)))
+            theta_comp_deg = theta_comp_rad*(180/np.pi)
+            if (np.isclose(theta_comp_deg,theta_deg,atol=a_tol)):
+                return p, q, theta_comp_deg
+    print('ERROR: was not able to find (p,q) that give desired twist angle, consider increasing optional argument q_max')
+    return
+
+    
 def remove_atoms_outside_cell(atoms_object):
     """
     Deletes all atoms outside of the box/cell of atoms_object
@@ -77,7 +100,7 @@ def make_unique_twisted_layers(p,q,lat_con):
     more_twisted_layer : {ASE atoms object}
         atoms object corresponding to layer which is more twisted compared to untwisted cell
     theta : {float}
-        twist angle
+        twist angle, radians
     """
     #compute integer vectors m, n
     n_full = np.array([p+3*q,-2*p]) + np.array([2*p,-p+3*q])
@@ -175,14 +198,18 @@ def make_unique_twisted_layers(p,q,lat_con):
     return less_twisted_layer, more_twisted_layer, theta
 
 
-def make_graphene(cell_type,p,q,lat_con,n_layer,sep,a_nn=None,sym='C',mass=12.01,h_vac=None):
+def make_graphene(cell_type,p,q,lat_con,n_layer,sep,a_nn=None,sym='C',
+                  mass=12.01,h_vac=None):
     """
     Generates twisted, uncorrugated graphene and returns ASE atoms object
     with specified graphene's geometry
+    NOTE: This function does not allow the input of twist angle, rather
+          the user should determine the proper (p,q) via the provided function
+          find_q_p(theta), then use the computed (p,q) here.
     ---Input---
     cell_type: unit cell type, 'rect' or 'hex', string
-    q : XXXX, integer diophantine sort of thing from Shallcross
-    q : XXXX, integer ''
+    p : p value from "Electronic structure of turbostratic graphene" by Shallcross et al, integer 
+    q : q value from "Electronic structure of turbostratic graphene" by Shallcross et al, integer 
     lat_con: in-plane lattice constant, float [Angstroms]
     n_layer: number of graphene layers, integer
     sep: interlayer separation(s) for n_layer>1, n_layer list of separations
@@ -297,20 +324,18 @@ def make_graphene(cell_type,p,q,lat_con,n_layer,sep,a_nn=None,sym='C',mass=12.01
         coords[:,2]+=h_vac*np.ones(n_atoms) #shift atoms up so vacuum symmetric about center
         atoms.set_positions(coords) #rewrite "vacuum-centered" coordinates
 
-    ase.visualize.view(atoms)
 
     return atoms
 
 
 if (__name__=="__main__"):
     #example(s) to modify when working on module
-    """
-    #27.78 degrees
-    make_graphene(cell_type='hex',n_layer=1,
-		  p=1,q=3,lat_con=0.0,a_nn=1.5,
-                  sep=1)
-    """
-    #??? degrees
-    make_graphene(cell_type='hex',n_layer=2,
-		  p=1,q=3,lat_con=0.0,a_nn=1.5,
-                  sep=6,h_vac=3)
+    #p_found, q_found, theta_comp = find_p_q(21.79)
+    p_found, q_found, theta_comp = find_p_q(9.43)
+    print('generating system with a {:.2f} degree twist'.format(theta_comp))
+    test_sheet = make_graphene(cell_type='hex',n_layer=1,
+                               p=p_found,q=q_found,lat_con=0.0,a_nn=1.5,
+                               sep=6,h_vac=3)
+    ase.visualize.view(test_sheet)
+                        
+    #ase.visualize.view(atoms)
