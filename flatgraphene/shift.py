@@ -197,7 +197,7 @@ shape (n_layers-1,2)')
 
     #check errors in sep (turn into list if necessary)
     if (not sep):
-        print('ERROR: sep required even for monolayer (to specify z height of box)')
+        print('ERROR: parameter sep required (even for monolayer, to specify z height of box)')
         return
     elif (isinstance(sep,list)):
         if (len(sep) != n_layer):
@@ -233,7 +233,7 @@ shape (n_layers-1,2)')
         print('ERROR: optional mass inputs must be list or numeric')
 
     #create specified geometry layer by layer
-    #add layers on top on at a time
+    #add layers on top one at a time
     for i_layer in range(0,n_layer):
         if (i_layer == 0): #create new atoms object
             atoms = make_layer(stacking[i_layer],cell_type,n_1,n_2,lat_con,z_abs[i_layer],sym[i_layer],mass[i_layer]) 

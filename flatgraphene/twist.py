@@ -49,7 +49,6 @@ def rotate_to_standard(atoms_object):
     first_lat_vec = unrotated_cell_vecs[0]
     if (np.isclose(first_lat_vec[2],0)):
         theta_back = np.arccos(np.dot(first_lat_vec,np.eye(3)[0])/np.linalg.norm(first_lat_vec))
-        print('theta_back:',theta_back)
     else:
         print('ERROR: expected unrotated cell vector with only nonzero x, y components')
     rot_mat_back = rot_mat_z(theta_back).T #matrix which rotates vectors CLOCKWISE by theta_back
@@ -105,9 +104,9 @@ def make_unique_twisted_layers(p,q,lat_con):
         t_2 = (1/gamma)*np.array([[2*q],
                                 [-p + q]])
 
-    #DETERMINE SIZE OF OVERSIZED UNTWISTED SHEET
-    unit_sheet = shift.make_layer('A','hex',1,1,lat_con,1.0,'C',12.01) #sheet with first lattice vector in x direction
-    unit_cell = unit_sheet.get_cell() #extract box/cell vectors
+    #DETERMINE SIZE OF OVERSIZED UNTWISTED LAYER
+    unit_layer = shift.make_layer('A','hex',1,1,lat_con,1.0,'C',12.01) #layer with first lattice vector in x direction
+    unit_cell = unit_layer.get_cell() #extract box/cell vectors
 
     lat_vec_mat_nontwisted = unit_cell[:2,:2].T #matrix of 2D lattice vectors from box vectors, one per column
     n_loc = lat_vec_mat_nontwisted@n #convert from number of lattice hops (vector n) to actual spatial position, also first box vector of less twisted cell
@@ -121,14 +120,14 @@ def make_unique_twisted_layers(p,q,lat_con):
     n_x = int(n_x) #should be able to do int cast with ceil, but oh well
     n_y = int(n_y)
 
-    #GENERATE OVERSIZED NONTWISTED SHEET (with first box vector along [1,0,0])
-    nontwisted_sheet = shift.make_layer('A','hex',n_x,n_y,lat_con,0.0,'C',12.01) #sheet with first lattice vector in x direction; symbol, mass, etc. will be overwritten later and are irrelevant
-    theta_nontwisted_less = np.arccos(np.dot(n_loc,np.eye(2)[0])/np.linalg.norm(n_loc)) #angle between unrotated sheet with lattice vector along [1,0,0] and lesser rotated sheet with first lattice vector along n_loc
+    #GENERATE OVERSIZED NONTWISTED LAYER (with first box vector along [1,0,0])
+    nontwisted_layer = shift.make_layer('A','hex',n_x,n_y,lat_con,0.0,'C',12.01) #layer with first lattice vector in x direction; symbol, mass, etc. will be overwritten later and are irrelevant
+    theta_nontwisted_less = np.arccos(np.dot(n_loc,np.eye(2)[0])/np.linalg.norm(n_loc)) #angle between unrotated layer with lattice vector along [1,0,0] and lesser rotated layer with first lattice vector along n_loc
 
-    #CONTRUCT LESS TWISTED SHEET
-    less_twisted_sheet = copy.deepcopy(nontwisted_sheet)
-    #shift atoms so that cell vectors do not start at left edge of oversized sheet
-    unshifted_positions = less_twisted_sheet.get_positions()
+    #CONTRUCT LESS TWISTED LAYER
+    less_twisted_layer = copy.deepcopy(nontwisted_layer)
+    #shift atoms so that cell vectors do not start at left edge of oversized layer
+    unshifted_positions = less_twisted_layer.get_positions()
     num_atoms_unshifted = unshifted_positions.shape[0]
     shift_vec = np.zeros(3)
     x_shift_multiplier = np.ceil(((rot_mat_60@n_loc)[1]/np.tan(np.pi/3)-(rot_mat_60@n_loc)[0])/lat_vec_mat_nontwisted[0,0])
@@ -136,17 +135,17 @@ def make_unique_twisted_layers(p,q,lat_con):
     shift_vec[:2] = x_shift_multiplier*lat_vec_mat_nontwisted[:,0]
     shift_array = np.tile(shift_vec,(num_atoms_unshifted,1))
     shifted_positions = unshifted_positions - shift_array
-    less_twisted_sheet.set_positions(shifted_positions)
+    less_twisted_layer.set_positions(shifted_positions)
     #set proper lattice vectors
     less_twisted_cell = np.eye(3)
     less_twisted_cell[:2,:2] = np.array([n_loc,rot_mat_60@n_loc])
-    less_twisted_sheet.set_cell(less_twisted_cell)
-    remove_atoms_outside_cell(less_twisted_sheet) #trim extra atoms outside cell
+    less_twisted_layer.set_cell(less_twisted_cell)
+    remove_atoms_outside_cell(less_twisted_layer) #trim extra atoms outside cell
 
-    #CONSTRUCT MORE TWISTED SHEET
-    more_twisted_sheet = copy.deepcopy(nontwisted_sheet)
+    #CONSTRUCT MORE TWISTED LAYER
+    more_twisted_layer = copy.deepcopy(nontwisted_layer)
     #shift atoms so that cell vectors do not start at left edge
-    unshifted_positions = more_twisted_sheet.get_positions()
+    unshifted_positions = more_twisted_layer.get_positions()
     num_atoms_unshifted = unshifted_positions.shape[0]
     x_shift_multiplier = np.ceil((rot_mat_60@m_loc)[1]/(np.tan(np.pi/3)*lat_vec_mat_nontwisted[0,0]))
     x_shift_multiplier = np.ceil(((rot_mat_60@m_loc)[1]/np.tan(np.pi/3)-(rot_mat_60@m_loc)[0])/lat_vec_mat_nontwisted[0,0])
@@ -155,25 +154,25 @@ def make_unique_twisted_layers(p,q,lat_con):
     shift_vec[:2] = x_shift_multiplier*lat_vec_mat_nontwisted[:,0]
     shift_array = np.tile(shift_vec,(num_atoms_unshifted,1))
     shifted_positions = unshifted_positions - shift_array
-    more_twisted_sheet.set_positions(shifted_positions)
+    more_twisted_layer.set_positions(shifted_positions)
     #set proper lattice vectors
     m_loc_rot_60 = rot_mat_z(np.pi/3)[:2,:2]@m_loc #second box vector of more twisted cell
     more_twisted_cell = np.eye(3)
     more_twisted_cell[:2,:2] = np.array([m_loc,m_loc_rot_60])
-    more_twisted_sheet.set_cell(more_twisted_cell)
-    remove_atoms_outside_cell(more_twisted_sheet) #trim extra atoms outside cell
+    more_twisted_layer.set_cell(more_twisted_cell)
+    remove_atoms_outside_cell(more_twisted_layer) #trim extra atoms outside cell
 
-    n_less_twisted = (less_twisted_sheet.get_positions()).shape[0]
-    n_more_twisted = (more_twisted_sheet.get_positions()).shape[0]
+    n_less_twisted = (less_twisted_layer.get_positions()).shape[0]
+    n_more_twisted = (more_twisted_layer.get_positions()).shape[0]
     if (n_less_twisted != n_more_twisted):
         print('ERROR: number of atoms in two different layers is not the same, please open an issue on GitHub')
         return
 
-    #ROTATE BOTH SHEETS TO ALIGN SUCH THAT FIRST LATTICE VECTOR ALONG [1,0,0]
-    rotate_to_standard(less_twisted_sheet)
-    rotate_to_standard(more_twisted_sheet)
+    #ROTATE BOTH LAYERS TO ALIGN SUCH THAT FIRST LATTICE VECTOR ALONG [1,0,0]
+    rotate_to_standard(less_twisted_layer)
+    rotate_to_standard(more_twisted_layer)
 
-    return less_twisted_sheet, more_twisted_sheet, theta
+    return less_twisted_layer, more_twisted_layer, theta
 
 
 def make_graphene(cell_type,p,q,lat_con,n_layer,sep,a_nn=None,sym='C',mass=12.01,h_vac=None):
@@ -200,8 +199,6 @@ def make_graphene(cell_type,p,q,lat_con,n_layer,sep,a_nn=None,sym='C',mass=12.01
     ---Output---
     atoms: graphene stack, ASE atoms object
     """
-    #make two layers
-    #assemble those layers with proper distances, etc.
     #purify inputs
     p = int(p)
     q = int(q)
@@ -212,10 +209,97 @@ def make_graphene(cell_type,p,q,lat_con,n_layer,sep,a_nn=None,sym='C',mass=12.01
     elif ((a_nn) and (cell_type == 'hex')):
         lat_con = (3/np.sqrt(2*(1+np.cos(np.pi/3))))*a_nn
 
-    less_twisted_sheet, more_twisted_sheet, theta = make_unique_twisted_layers(p,q,lat_con)
+    #check n_layer
+    if (not (n_layer - int(n_layer) == 0.0 )):
+        print('ERROR: n_layer must be a positive integer')
+        return
+    else:
+        n_layer = int(n_layer) #clean input
 
-    print('theta (degrees):',theta*(180/np.pi))
+    #check errors in sep (turn into list if necessary)
+    if (not sep):
+        print('ERROR: parameter sep required (even for monolayer, to specify z height of box)')
+        return
+    elif (isinstance(sep,list)):
+        if (len(sep) != n_layer):
+            print('ERROR: specifying sep as list requires list length n_layer')
+            return
+        else:
+            sep_input=np.array([0.0]+sep,dtype=float) #sneak in leading 0.0 for first layer
+            z_abs=np.empty(sep_input.shape[0],dtype=float)
+            for i_sep in range(z_abs.shape[0]): #compute offsets relative to bottom layer
+                z_abs[i_sep]=np.sum(sep_input[0:i_sep+1])
+    elif (isinstance(sep,(float,int))):
+        sep_input=np.array([0.0]+[sep]*(n_layer-1),dtype=float) #sneak in 0.0
+        z_abs=sep*np.arange(n_layer+1) #[0, sep, 2*sep, ...]
 
+    #check errors in sym
+    if (isinstance(sym,list)):
+        if (len(sym) != n_layer):
+            print('ERROR: specifying sym as list requires length n_layer')
+            return
+    elif (isinstance(sym,str)):
+        sym=[sym]*n_layer #convert to list of length n_layer
+    else:
+        print('ERROR: optional sym inputs must be list of characters/strings or character/string')
+
+    #check errors in mass
+    if (isinstance(mass,list)):
+        if (len(mass) != n_layer):
+            print('ERROR: specifying mass as list requires length n_layer')
+            return
+    elif (isinstance(mass,(float,int))):
+        mass=mass*np.ones(n_layer)
+    else:
+        print('ERROR: optional mass inputs must be list or numeric')
+
+    #make two layers
+    less_twisted_layer, more_twisted_layer, theta = make_unique_twisted_layers(p,q,lat_con)
+    n_atoms_layer = (less_twisted_layer.get_positions()).shape[0] #number of atoms in single layer
+
+    #create specified geometry layer by layer (assumes stacking less-more-less-...)
+    #add layers on top one at a time
+    for i_layer in range(0,n_layer):
+        #make copy of correct layer  based on layer number
+        if ((i_layer+1)%2 == 0): #odd layer number
+            cur_layer = copy.deepcopy(less_twisted_layer)
+        else: #even layer number (1...n_layer)
+            cur_layer = copy.deepcopy(more_twisted_layer)
+
+        #overwrite dummy properties of layer set in make_unique_twisted
+        cur_positions = cur_layer.get_positions()
+        cur_positions[:,2] = z_abs[i_layer]*np.ones(n_atoms_layer) #set proper z value for layer
+        cur_layer.set_positions(cur_positions)
+        
+        cur_layer.symbols[:] = sym[i_layer] #set symbol
+        cur_layer.set_masses(mass[i_layer]*np.ones(n_atoms_layer)) #set masses (to overwrite default symbol mass)
+
+        #create stack or add layer to stack
+        if (i_layer == 0): #create new atoms object
+            atoms = copy.deepcopy(cur_layer)
+        else:
+            atoms += cur_layer
+
+        #adjust z-height of simulation cell
+        cur_cell=atoms.get_cell()
+        cur_cell[2]=z_abs[i_layer+1]*np.eye(3)[:,2] #set z-height as vector, set buffer above to previous interlayer separation (fine in most cases)
+        atoms.set_cell(cur_cell)
+
+    #add vacuum layer of h_vac around outermost layers
+    if (h_vac): 
+        #TURN OFF Z PERIODICITY WHEN PERIODICITY IS ADDRESSED
+        cur_cell=atoms.get_cell()
+        cur_cell[2]=z_abs[i_layer]*np.eye(3)[:,2] #not z-periodic, remove assumed periodic space
+        cur_cell[2] += 2*h_vac*np.eye(3)[:,2] #add full thickness of vacuum on top
+        atoms.set_cell(cur_cell)
+        coords=atoms.get_positions()
+        n_atoms=coords.shape[0] #get number of atoms
+        coords[:,2]+=h_vac*np.ones(n_atoms) #shift atoms up so vacuum symmetric about center
+        atoms.set_positions(coords) #rewrite "vacuum-centered" coordinates
+
+    ase.visualize.view(atoms)
+
+    return atoms
 
 
 if (__name__=="__main__"):
@@ -227,6 +311,6 @@ if (__name__=="__main__"):
                   sep=1)
     """
     #??? degrees
-    make_graphene(cell_type='hex',n_layer=1,
-		  p=1,q=53,lat_con=0.0,a_nn=1.5,
-                  sep=1)
+    make_graphene(cell_type='hex',n_layer=2,
+		  p=1,q=3,lat_con=0.0,a_nn=1.5,
+                  sep=6,h_vac=3)
