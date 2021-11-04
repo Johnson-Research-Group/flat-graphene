@@ -75,6 +75,7 @@ def make_layer(stacking,cell_type,n_1,n_2,lat_con,z_val,sym,mass):
     ---Output---
     layer: a single graphene layer shifted appropriately, ASE object
     """
+    dummy_sym='C' #used as input to factory, but then overwritten by sym
     vert_shift=np.array([0.,0.,z_val])
     horz_shift=np.zeros(3)
     if (cell_type=='rect'):
@@ -94,7 +95,8 @@ def make_layer(stacking,cell_type,n_1,n_2,lat_con,z_val,sym,mass):
         layer=fact(directions=[[1,0,0],[0,1,0],[0,0,1]],
                    size=(n_1,n_2,1),
                    latticeconstant=latticeconstant_scaled,
-                   symbol=sym)
+                   symbol=dummy_sym)
+        layer.symbols[:] = sym #set symbol to actual value
         layer.translate(horz_shift+vert_shift) #shift layer according to stacking and z_val
         n_atoms_layer=layer.get_masses().shape[0] #extract number of atoms in layer
         layer.set_masses(mass*np.ones(n_atoms_layer)) #set masses to mass (rather than ASE default by symbol)
@@ -119,7 +121,8 @@ def make_layer(stacking,cell_type,n_1,n_2,lat_con,z_val,sym,mass):
         triclinic_cell_info = tuple(np.hstack((triclinic_side_lengths,triclinic_angles)))
         layer=fact(size=(n_1,n_2,1),
                    latticeconstant=triclinic_cell_info,
-                   symbol=sym)
+                   symbol=dummy_sym)
+        layer.symbols[:] = sym #set symbol to actual value
         layer.translate(horz_shift+vert_shift) #shift layer according to stacking and z_val
         n_atoms_layer=layer.get_masses().shape[0] #extract number of atoms in layer
         layer.set_masses(mass*np.ones(n_atoms_layer)) #set masses to mass (rather than ASE default by symbol)
@@ -263,6 +266,7 @@ shape (n_layers-1,2)')
 
 if (__name__=="__main__"):
     #example to modify when working on module
-    atoms=make_graphene(stacking=['A','B','C'],cell_type='hex',n_layer=3,
-		        n_1=3,n_2=3,lat_con=0.0,a_nn=1.5,sep=3.0,sym=['B','C','N'])
+    atoms=make_graphene(stacking=['A','B','C'],cell_type='hex',
+                        n_layer=3,n_1=3,n_2=3,lat_con=0.0,a_nn=1.5,
+                        sep=3.0,sym=['O','F','N'],mass=np.array([0,1,2]))
     ase.visualize.view(atoms)

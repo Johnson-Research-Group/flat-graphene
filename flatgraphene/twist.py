@@ -324,8 +324,8 @@ def make_graphene(cell_type,p,q,lat_con,n_layer,sep,a_nn=None,sym='C',
         coords[:,2]+=h_vac*np.ones(n_atoms) #shift atoms up so vacuum symmetric about center
         atoms.set_positions(coords) #rewrite "vacuum-centered" coordinates
 
-
     return atoms
+
 
 
 if (__name__=="__main__"):
@@ -333,9 +333,8 @@ if (__name__=="__main__"):
     #p_found, q_found, theta_comp = find_p_q(21.79)
     p_found, q_found, theta_comp = find_p_q(9.43)
     print('generating system with a {:.2f} degree twist'.format(theta_comp))
-    test_sheet = make_graphene(cell_type='hex',n_layer=1,
+    test_sheet = make_graphene(cell_type='hex',n_layer=2,
                                p=p_found,q=q_found,lat_con=0.0,a_nn=1.5,
-                               sep=6,h_vac=3)
+                               sep=6,sym='Ne',mass=9,h_vac=3)
     ase.visualize.view(test_sheet)
                         
-    #ase.visualize.view(atoms)
