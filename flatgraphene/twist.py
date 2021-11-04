@@ -335,6 +335,6 @@ if (__name__=="__main__"):
     print('generating system with a {:.2f} degree twist'.format(theta_comp))
     test_sheet = make_graphene(cell_type='hex',n_layer=2,
                                p=p_found,q=q_found,lat_con=0.0,a_nn=1.5,
-                               sep=6,sym='Ne',mass=9,h_vac=3)
+                               sep=3.4,sym=['C','Ne'],mass=[12.01,12.02],h_vac=3)
     ase.visualize.view(test_sheet)
                         
