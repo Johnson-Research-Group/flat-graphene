@@ -102,13 +102,13 @@ from ase.visualize import view
 import flatgraphene as fg
 #the comments from the above example apply here as well
 atoms=fg.shift.make_graphene(stacking=['AB','AA'],cell_type='rect',n_1=3,n_2=3,
-					 lat_con=0.0,n_layer=3,sep=[1.0,1.0,1.0],a_nn=1.5,
-		             sym=['C','C','C'],mass=[12,12,12],h_vac=3.0)
+                             lat_con=0.0,n_layer=3,sep=[1.0,1.0,1.0],a_nn=1.5,
+                             sym=['C','C','C'],mass=[12,12,12],h_vac=3.0)
 ase.visualize.view(atoms)
 ```
 
 ### Twist
-This example creates a 21.79 degree twisted system by first computing the proper `p,q`, then using these as inputs to `make_graphene`. All of the properties from the shifted case which may be set here also allow the same variety of input formats (scalar, list, etc.)
+This example creates a 21.79 degree twisted system by first computing the proper `p,q`, then using these as inputs to `make_graphene`. All of the properties from the shifted case which can be set here also allow the same variety of input formats (scalar, list, etc.).
 ```python
 import ase
 from ase.visualize import view
