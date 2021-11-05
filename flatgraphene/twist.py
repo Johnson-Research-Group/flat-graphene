@@ -230,6 +230,14 @@ def make_graphene(cell_type,p,q,lat_con,n_layer,sep,a_nn=None,sym='C',
     p = int(p)
     q = int(q)
 
+    #check errors in cell_type
+    if (cell_type not in ['rect','hex']):
+        print('ERROR: only rectangular (\'rect\') and hexagonal (\'hex\') unit cells supported')
+        return
+    elif (cell_type == 'rect'):
+        print('ERROR: rectangular unit cells not yet supported')
+        return
+
     #optionally use a_nn to override lat_con
     if ((a_nn) and (cell_type == 'rect')):
         lat_con=2*a_nn*np.sin(np.pi/3)

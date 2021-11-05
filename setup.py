@@ -5,9 +5,9 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name='flatgraphene',  
-    version='0.1',
+    version='0.1.2',
     scripts=['bin/flatgraphene'] ,
-    author="Gabriel Brown",
+    author="Gabriel H. Brown",
     author_email="gabriel.h.brown@gmail.com",
     description="Generate mono and multilayer graphene geometries",
     long_description=long_description,
