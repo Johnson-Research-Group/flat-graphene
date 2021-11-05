@@ -1,7 +1,10 @@
 
 Python module to generate flat (uncorrugated) graphene configurations with one or more layers, as well as twisted bilayer graphene.
 
-![](https://github.com/Johnson-Research-Group/flat-graphene/blob/master/images/shifted_image_shrunken.png?raw=true) ![](https://github.com/Johnson-Research-Group/flat-graphene/blob/master/images/twisted_image_shrunken.png?raw=true)
+Returns [ASE](https://wiki.fysik.dtu.dk/ase/about.html) atoms objects, which may be converted to your file format of choice (LAMMPS, xyz, etc.) in one line.
+
+![](https://github.com/Johnson-Research-Group/flat-graphene/blob/master/images/shifted_image.png?raw=true) ![](https://github.com/Johnson-Research-Group/flat-graphene/blob/master/images/twisted_image.png?raw=true)
+
 
 ## Installation
 Install using `pip`
@@ -100,7 +103,7 @@ def make_graphene(stacking,cell_type,n_1,n_2,lat_con,n_layer,sep,a_nn=None,sym='
 
 Twisted multi-layer graphene may be similarly created via `twist.make_graphene`.
 Parameters are similar to the shifted case, but note that twist angle **is not** an input parameters, rather the `p,q` specification from "Electronic structure of turbostratic graphene" by Shallcross is preferred.
-Use the function `twist.find_p_q(theta)` to find the `p,q` corresponding the desired twist angle, then use computed `p,q` as the input to the graphene generator.
+Use the function `twist.find_p_q(theta)` (documentation below) to find the `p,q` corresponding the desired twist angle, then use computed `p,q` as the input to the graphene generator.
 
 ```python
 #in flatgraphene/twist.py
@@ -136,3 +139,25 @@ def make_graphene(cell_type,p,q,lat_con,n_layer,sep,a_nn=None,sym='C',
     """
 ```
 
+Compute the integers `p,q` corresponding to input twist angle using `twist.find_p_q`.
+If no match to input angle is found with default parameters, consider increasing `q_max` or decreasing `a_tol`.
+
+
+```python
+def find_p_q(theta_deg,q_max=100,a_tol=1e-2):
+    """
+    Computes the p_q that generate a twist of theta degrees
+    ---Inputs---
+    theta_deg : {float}
+        desired twist angle, [angular degrees]
+    q_max : {integer}
+        q >= p > 0, so q_max controls how many pairs are checked
+    a_tol : {float}
+        acceptable absolute difference between computed angle and desired angle
+    ---Outputs---
+    p : {integer}
+        p value from "Electronic structure of turbostratic graphene" by Shallcross et al
+    q : {integer}
+        q value from "Electronic structure of turbostratic graphene" by Shallcross et al
+    """
+```

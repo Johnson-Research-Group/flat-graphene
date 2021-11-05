@@ -18,7 +18,7 @@ def rot_mat_z(theta):
 
 def find_p_q(theta_deg,q_max=100,a_tol=1e-2):
     """
-    Computes the p_q that generate a twist of theta radians
+    Computes the p_q that generate a twist of theta degrees
     ---Inputs---
     theta_deg : {float}
         desired twist angle, [angular degrees]
