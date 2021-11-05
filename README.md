@@ -1,7 +1,7 @@
 
 Python module to generate flat (uncorrugated) graphene configurations with one or more layers, as well as twisted bilayer graphene.
 
-![](https://github.com/Johnson-Research-Group/flat-graphene/blob/master/images/shifted_image.png?raw=true) ![](https://github.com/Johnson-Research-Group/flat-graphene/blob/master/images/twisted_image.png?raw=true)
+![](https://github.com/Johnson-Research-Group/flat-graphene/blob/master/images/shifted_image_shrunken.png?raw=true) ![](https://github.com/Johnson-Research-Group/flat-graphene/blob/master/images/twisted_image_shrunken.png?raw=true)
 
 ## Installation
 Install using `pip`
