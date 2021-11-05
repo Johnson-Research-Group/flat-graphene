@@ -135,11 +135,9 @@ def make_graphene(stacking,cell_type,n_1,n_2,lat_con,n_layer,sep,a_nn=None,sym='
     with specified graphene's geometry
     ---Input---
     stacking: specification of stacking for layers above first,
-              ('A','B','SP') relative to first layer,
+              ('A','B','C','SP') relative to origin of cell, 
               single string, or list of strings, or numpy array of shape
-	      (n_layer-1,2)
-              *NOTE*: single string inputs result in the input string
-                      alternated with 'A' for n_layers
+	      (n_layer,2)
     cell_type: unit cell type, 'rect' or 'hex', string
     n_1: number of unit cells in x direction, integer
     n_2: number of unit cells in y direction, integer
@@ -157,7 +155,7 @@ def make_graphene(stacking,cell_type,n_1,n_2,lat_con,n_layer,sep,a_nn=None,sym='
           or single numerical value if every layer has the same mass
     h_vac: height of the vacuum layer above and below outer layers, float [Angstroms]
     ---Output---
-    atoms: graphene stack, ASE atoms object
+    atoms: ASE atoms object
     """
 
     #check errors in cell_type
@@ -171,32 +169,38 @@ def make_graphene(stacking,cell_type,n_1,n_2,lat_con,n_layer,sep,a_nn=None,sym='
     elif ((a_nn) and (cell_type == 'hex')):
         lat_con = (3/np.sqrt(2*(1+np.cos(np.pi/3))))*a_nn
 
-    #check errors in stacking (make into list if necessary)
-    if (type(stacking).__module__ == 'numpy'):
-        if (stacking.shape != (n_layer-1,2)):
-            print('ERROR: specifying stacking as numpy array requires shape (n_layer,2)')
-            return
-        else:
-            stacking = np.vstack((np.zeros(2),stacking)) #add "hidden" A stacking for bottom layer
-    elif (isinstance(stacking,list)):
-        if (len(stacking) != n_layer ):
-            print('ERROR: specifying stacking as list of strings requires list of length n_layer')
-            return
-        else:
-            string_stackings = ['A','B','C','SP']
-            for elem in stacking:
-                if (elem not in string_stackings):
-                    print('ERROR: elements of list stacking must be in {\'A\',\'B\',\'SP\'}')
-    else:
-        print('ERROR: stacking input must be a list of strings or numpy array with \
-shape (n_layers-1,2)')
-
     #check n_layer
     if (not (n_layer - int(n_layer) == 0.0 )):
         print('ERROR: n_layer must be a positive integer')
         return
     else:
         n_layer = int(n_layer) #clean input
+
+    #check errors in stacking (make into list if necessary)
+    string_stackings = ['A','B','C','SP']
+    if (type(stacking).__module__ == 'numpy'):
+        if (stacking.shape != (n_layer,2)):
+            print('ERROR: specifying stacking as numpy array requires shape (n_layer,2)')
+            return
+    elif (isinstance(stacking,list)):
+        if (len(stacking) != n_layer ):
+            print('ERROR: specifying stacking as list of strings requires list of length n_layer')
+            return
+        else:
+            for elem in stacking:
+                if (elem not in string_stackings):
+                    print('ERROR: elements of list stacking must be in {\'A\',\'B\',\'C\',\'SP\'}')
+                    return
+    elif (isinstance(stacking,str)):
+        if (stacking not in string_stackings):
+            print('ERROR: string must be in {\'A\',\'B\',\'C\',\'SP\'}')
+            return
+        else:
+            stacking = [stacking]*n_layer #convert into list of strings
+    else:
+        print('ERROR: stacking input must be a list of strings or numpy array with \
+                shape (n_layers,2)')
+        return
 
     #check errors in sep (turn into list if necessary)
     if (not sep):
