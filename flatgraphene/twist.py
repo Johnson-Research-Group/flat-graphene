@@ -308,10 +308,15 @@ def make_graphene(cell_type,p,q,lat_con,n_layer,sep,a_nn=None,sym='C',
         
         cur_layer.symbols[:] = sym[i_layer] #set symbol
         cur_layer.set_masses(mass[i_layer]*np.ones(n_atoms_layer)) #set masses (to overwrite default symbol mass)
-
+                    
+        #added code
+        mol_ids=(i_layer%2+1)*np.ones(n_atoms_layer).astype(int)
+        cur_layer.set_array("mol-id",mol_ids)
+        
         #create stack or add layer to stack
         if (i_layer == 0): #create new atoms object
             atoms = copy.deepcopy(cur_layer)
+
         else:
             atoms += cur_layer
 
