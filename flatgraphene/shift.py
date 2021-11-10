@@ -173,7 +173,7 @@ def make_graphene(stacking,cell_type,n_1,n_2,lat_con,n_layer,sep,a_nn=None,sym='
         lat_con = (3/np.sqrt(2*(1+np.cos(np.pi/3))))*a_nn
 
     #check n_layer
-    if (not (n_layer - int(n_layer) == 0.0 )):
+    if (n_layer - int(n_layer) != 0.0):
         print('ERROR: n_layer must be a positive integer')
         return
     else:
@@ -241,7 +241,7 @@ def make_graphene(stacking,cell_type,n_1,n_2,lat_con,n_layer,sep,a_nn=None,sym='
     elif (isinstance(mass,(float,int))):
         mass=mass*np.ones(n_layer)
     else:
-        print('ERROR: optional mass inputs must be list or numeric')
+        print('ERROR: optional mass input must be list or numeric')
 
     #check errors in mol_id
     if (isinstance(mol_id,list)):
@@ -253,7 +253,7 @@ def make_graphene(stacking,cell_type,n_1,n_2,lat_con,n_layer,sep,a_nn=None,sym='
     elif (mol_id is None):
         mol_id = np.arange(1,n_layer+1)
     else:
-        print('ERROR: optional mol_id inputs must be list or numeric')
+        print('ERROR: optional mol_id input must be list or numeric')
 
     #create specified geometry layer by layer (add layers on top one at a time)
     for i_layer in range(0,n_layer):

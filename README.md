@@ -71,7 +71,7 @@ Parameters include cell type (rectangular or hexagonal), alignment (A,B,C,SP), n
 ```python
 #in flatgraphene/shift.py
 def make_graphene(stacking,cell_type,n_1,n_2,lat_con,n_layer,sep,a_nn=None,sym='C',
-                  mass=12.01,h_vac=None):
+                  mass=12.01,mol_id=None,h_vac=None):
     """
     Generates untwisted, uncorrugated graphene and returns ASE atoms object
     with specified graphene's geometry
@@ -95,6 +95,8 @@ def make_graphene(stacking,cell_type,n_1,n_2,lat_con,n_layer,sep,a_nn=None,sym='
          for every layer
     mass: optional mass, list of length n_layer containing numeric values
           or single numerical value if every layer has the same mass
+    mol_id: optional molecular IDs for each layer, integer or list of integers
+            of length n_layer
     h_vac: height of the vacuum layer above and below outer layers, float [Angstroms]
     ---Output---
     atoms: ASE atoms object
@@ -108,7 +110,7 @@ Use the function `twist.find_p_q(theta)` (documentation below) to find the `p,q`
 ```python
 #in flatgraphene/twist.py
 def make_graphene(cell_type,p,q,lat_con,n_layer,sep,a_nn=None,sym='C',
-                  mass=12.01,h_vac=None):
+                  mass=12.01,mol_id=None,h_vac=None):
     """
     Generates twisted, uncorrugated graphene and returns ASE atoms object
     with specified graphene's geometry
@@ -117,10 +119,8 @@ def make_graphene(cell_type,p,q,lat_con,n_layer,sep,a_nn=None,sym='C',
           find_q_p(theta), then use the computed (p,q) here.
     ---Input---
     cell_type: unit cell type, 'rect' or 'hex', string
-    p : p value from "Electronic structure of turbostratic graphene"
-        by Shallcross et al, integer 
-    q : q value from "Electronic structure of turbostratic graphene"
-        by Shallcross et al, integer 
+    p : p value from "Electronic structure of turbostratic graphene" by Shallcross et al, integer 
+    q : q value from "Electronic structure of turbostratic graphene" by Shallcross et al, integer 
     lat_con: in-plane lattice constant, float [Angstroms]
     n_layer: number of graphene layers, integer
     sep: interlayer separation(s) for n_layer>1, n_layer list of separations
@@ -133,9 +133,11 @@ def make_graphene(cell_type,p,q,lat_con,n_layer,sep,a_nn=None,sym='C',
          for every layer
     mass: optional mass, list of length n_layer containing numeric values
           or single numerical value if every layer has the same mass
+    mol_id: optional molecular IDs for each layer, integer or list of integers
+            of length n_layer
     h_vac: height of the vacuum layer above and below outer layers, float [Angstroms]
     ---Output---
-    atoms: ASE atoms object
+    atoms: graphene stack, ASE atoms object
     """
 ```
 

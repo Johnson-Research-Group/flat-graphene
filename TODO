@@ -1,4 +1,3 @@
 
 To do:
-    - don't forget periodic boundary conditions (do I need to/how to tell LAMMPS?)
     - rectangular cell for twisted bilayer graphene

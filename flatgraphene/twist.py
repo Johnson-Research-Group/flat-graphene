@@ -2,8 +2,9 @@
 import copy
 import numpy as np
 import ase
-from flatgraphene import shift
+import shift
 from ase.visualize import view
+
 
 def rot_mat_z(theta):
     """
@@ -128,7 +129,7 @@ def make_unique_twisted_layers(p,q,lat_con):
                                 [-p + q]])
 
     #DETERMINE SIZE OF OVERSIZED UNTWISTED LAYER
-    unit_layer = shift.make_layer('A','hex',1,1,lat_con,1.0,'C',12.01) #layer with first lattice vector in x direction
+    unit_layer = shift.make_layer('A','hex',1,1,lat_con,1.0,'C',12.01,1) #layer with first lattice vector in x direction
     unit_cell = unit_layer.get_cell() #extract box/cell vectors
 
     lat_vec_mat_nontwisted = unit_cell[:2,:2].T #matrix of 2D lattice vectors from box vectors, one per column
@@ -144,7 +145,7 @@ def make_unique_twisted_layers(p,q,lat_con):
     n_y = int(n_y)
 
     #GENERATE OVERSIZED NONTWISTED LAYER (with first box vector along [1,0,0])
-    nontwisted_layer = shift.make_layer('A','hex',n_x,n_y,lat_con,0.0,'C',12.01) #layer with first lattice vector in x direction; symbol, mass, etc. will be overwritten later and are irrelevant
+    nontwisted_layer = shift.make_layer('A','hex',n_x,n_y,lat_con,0.0,'C',12.01,1) #layer with first lattice vector in x direction; symbol, mass, etc. will be overwritten later and are irrelevant
     theta_nontwisted_less = np.arccos(np.dot(n_loc,np.eye(2)[0])/np.linalg.norm(n_loc)) #angle between unrotated layer with lattice vector along [1,0,0] and lesser rotated layer with first lattice vector along n_loc
 
     #CONTRUCT LESS TWISTED LAYER
@@ -199,7 +200,7 @@ def make_unique_twisted_layers(p,q,lat_con):
 
 
 def make_graphene(cell_type,p,q,lat_con,n_layer,sep,a_nn=None,sym='C',
-                  mass=12.01,h_vac=None):
+                  mass=12.01,mol_id=None,h_vac=None):
     """
     Generates twisted, uncorrugated graphene and returns ASE atoms object
     with specified graphene's geometry
@@ -228,6 +229,7 @@ def make_graphene(cell_type,p,q,lat_con,n_layer,sep,a_nn=None,sym='C',
     ---Output---
     atoms: graphene stack, ASE atoms object
     """
+
     #purify inputs
     p = int(p)
     q = int(q)
@@ -247,7 +249,7 @@ def make_graphene(cell_type,p,q,lat_con,n_layer,sep,a_nn=None,sym='C',
         lat_con = (3/np.sqrt(2*(1+np.cos(np.pi/3))))*a_nn
 
     #check n_layer
-    if (not (n_layer - int(n_layer) == 0.0 )):
+    if (n_layer - int(n_layer) != 0.0):
         print('ERROR: n_layer must be a positive integer')
         return
     else:
@@ -279,7 +281,7 @@ def make_graphene(cell_type,p,q,lat_con,n_layer,sep,a_nn=None,sym='C',
     elif (isinstance(sym,str)):
         sym=[sym]*n_layer #convert to list of length n_layer
     else:
-        print('ERROR: optional sym inputs must be list of characters/strings or character/string')
+        print('ERROR: optional sym input must be list of characters/strings or character/string')
 
     #check errors in mass
     if (isinstance(mass,list)):
@@ -289,7 +291,7 @@ def make_graphene(cell_type,p,q,lat_con,n_layer,sep,a_nn=None,sym='C',
     elif (isinstance(mass,(float,int))):
         mass=mass*np.ones(n_layer)
     else:
-        print('ERROR: optional mass inputs must be list or numeric')
+        print('ERROR: optional mass input must be list or numeric')
 
     #check errors in mol_id
     if (isinstance(mol_id,list)):
@@ -301,7 +303,7 @@ def make_graphene(cell_type,p,q,lat_con,n_layer,sep,a_nn=None,sym='C',
     elif (mol_id is None):
         mol_id = np.arange(1,n_layer+1)
     else:
-        print('ERROR: optional mol_id inputs must be list or numeric')
+        print('ERROR: optional mol_id input must be list or numeric')
 
     #make two layers
     less_twisted_layer, more_twisted_layer, theta = make_unique_twisted_layers(p,q,lat_con)
@@ -322,6 +324,7 @@ def make_graphene(cell_type,p,q,lat_con,n_layer,sep,a_nn=None,sym='C',
         cur_layer.set_positions(cur_positions)
         
         cur_layer.symbols[:] = sym[i_layer] #set symbol
+        cur_layer.set_array("mol-id",mol_id[i_layer]*np.ones(n_atoms_layer,dtype=np.int8)) #set mol-id
         cur_layer.set_masses(mass[i_layer]*np.ones(n_atoms_layer)) #set masses (to overwrite default symbol mass)
 
         #create stack or add layer to stack
@@ -358,6 +361,7 @@ if (__name__=="__main__"):
     print('generating system with a {:.2f} degree twist'.format(theta_comp))
     test_sheet = make_graphene(cell_type='hex',n_layer=2,
                                p=p_found,q=q_found,lat_con=0.0,a_nn=1.5,
-                               sep=3.4,sym=['C','Ne'],mass=[12.01,12.02],h_vac=3)
+                               sep=3.4,sym=['C','Ne'],mass=[12.01,12.02],
+                               mol_id=0,h_vac=3)
     ase.visualize.view(test_sheet)
                         

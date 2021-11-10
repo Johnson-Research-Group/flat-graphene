@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name='flatgraphene',  
-    version='0.1.2',
+    version='0.2',
     scripts=['bin/flatgraphene'] ,
     author="Gabriel H. Brown",
     author_email="gabriel.h.brown@gmail.com",
