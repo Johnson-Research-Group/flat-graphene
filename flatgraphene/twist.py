@@ -222,6 +222,8 @@ def make_graphene(cell_type,p,q,lat_con,n_layer,sep,a_nn=None,sym='C',
          for every layer
     mass: optional mass, list of length n_layer containing numeric values
           or single numerical value if every layer has the same mass
+    mol_id: optional molecular IDs for each layer, integer or list of integers
+            of length n_layer
     h_vac: height of the vacuum layer above and below outer layers, float [Angstroms]
     ---Output---
     atoms: graphene stack, ASE atoms object
@@ -251,7 +253,7 @@ def make_graphene(cell_type,p,q,lat_con,n_layer,sep,a_nn=None,sym='C',
     else:
         n_layer = int(n_layer) #clean input
 
-    #check errors in sep (turn into list if necessary)
+    #check errors in sep (turn into list if necessary), and compute z_abs
     if (not sep):
         print('ERROR: parameter sep required (even for monolayer, to specify z height of box)')
         return
@@ -259,13 +261,14 @@ def make_graphene(cell_type,p,q,lat_con,n_layer,sep,a_nn=None,sym='C',
         if (len(sep) != n_layer):
             print('ERROR: specifying sep as list requires list length n_layer')
             return
-        else:
-            sep_input=np.array([0.0]+sep,dtype=float) #sneak in leading 0.0 for first layer
+        else: #compute z_abs = [first_layer_z, ..., last_layer_z, total_box_height]
+            sep_input=np.array([0.0]+sep,dtype=float) #sneak in 0 so first_layer_z = 0
             z_abs=np.empty(sep_input.shape[0],dtype=float)
             for i_sep in range(z_abs.shape[0]): #compute offsets relative to bottom layer
                 z_abs[i_sep]=np.sum(sep_input[0:i_sep+1])
+            print('z_abs:',z_abs)
     elif (isinstance(sep,(float,int))):
-        sep_input=np.array([0.0]+[sep]*(n_layer-1),dtype=float) #sneak in 0.0
+        sep_input=np.array([0.0]+[sep]*(n_layer-1),dtype=float) #sneak in 0 so first_layer_z = 0
         z_abs=sep*np.arange(n_layer+1) #[0, sep, 2*sep, ...]
 
     #check errors in sym
@@ -287,6 +290,18 @@ def make_graphene(cell_type,p,q,lat_con,n_layer,sep,a_nn=None,sym='C',
         mass=mass*np.ones(n_layer)
     else:
         print('ERROR: optional mass inputs must be list or numeric')
+
+    #check errors in mol_id
+    if (isinstance(mol_id,list)):
+        if (len(mol_id) != n_layer):
+            print('ERROR: specifying mol_id as list requires length n_layer')
+            return
+    elif (isinstance(mol_id,(float,int))):
+        mol_id=int(mol_id)*np.ones(n_layer)
+    elif (mol_id is None):
+        mol_id = np.arange(1,n_layer+1)
+    else:
+        print('ERROR: optional mol_id inputs must be list or numeric')
 
     #make two layers
     less_twisted_layer, more_twisted_layer, theta = make_unique_twisted_layers(p,q,lat_con)

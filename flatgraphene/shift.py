@@ -67,11 +67,9 @@ def make_layer(stacking,cell_type,n_1,n_2,lat_con,z_val,sym,mass,mol_id):
     n_2: number of unit cells in y direction, integer
     lat_con: in-plane lattice constant, float [Angstroms]
     z_val: z coordinates of atoms in layer, float [Angstroms]
-    sym: optional atomic symbol(s), list of length n_layer containing
-         characters/strings or single character/string if same symbol
-         for every layer
-    mass: optional mass, list of length n_layer containing numeric values
-          or single numerical value if every layer has the same mass
+    sym: atomic symbol of atoms in layer, string (one or two characters)
+    mass: mass of elements in this layer, scalar numeric
+    mol_id: molecular IDs for each layer, integer
     ---Output---
     layer: a single graphene layer shifted appropriately, ASE object
     """
@@ -156,7 +154,8 @@ def make_graphene(stacking,cell_type,n_1,n_2,lat_con,n_layer,sep,a_nn=None,sym='
          for every layer
     mass: optional mass, list of length n_layer containing numeric values
           or single numerical value if every layer has the same mass
-    mol_id: molecular IDs for each layer
+    mol_id: optional molecular IDs for each layer, integer or list of integers
+            of length n_layer
     h_vac: height of the vacuum layer above and below outer layers, float [Angstroms]
     ---Output---
     atoms: ASE atoms object
@@ -206,7 +205,7 @@ def make_graphene(stacking,cell_type,n_1,n_2,lat_con,n_layer,sep,a_nn=None,sym='
                 shape (n_layers,2)')
         return
 
-    #check errors in sep (turn into list if necessary)
+    #check errors in sep (turn into list if necessary), and compute z_abs
     if (not sep):
         print('ERROR: parameter sep required (even for monolayer, to specify z height of box)')
         return
