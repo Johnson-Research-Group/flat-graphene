@@ -53,7 +53,7 @@ class GrapheneFactoryTriclinic(TriclinicFactory):
     element_basis=(0,0)
 
 
-def make_layer(stacking,cell_type,n_1,n_2,lat_con,z_val,sym,mass):
+def make_layer(stacking,cell_type,n_1,n_2,lat_con,z_val,sym,mass,mol_id):
     """
     Creates and returns a single layer of graphene which has been shifted
     according to its stacking and z_value
@@ -100,6 +100,7 @@ def make_layer(stacking,cell_type,n_1,n_2,lat_con,z_val,sym,mass):
         layer.translate(horz_shift+vert_shift) #shift layer according to stacking and z_val
         n_atoms_layer=layer.get_masses().shape[0] #extract number of atoms in layer
         layer.set_masses(mass*np.ones(n_atoms_layer)) #set masses to mass (rather than ASE default by symbol)
+        layer.set_array("mol-id",mol_id*np.ones(n_atoms_layer,dtype=np.int8))
     elif (cell_type=='hex'):
         fact = GrapheneFactoryTriclinic()
         a_nn = (np.sqrt(2*(1+np.cos(np.pi/3)))/3)*lat_con #compute nearest neighbor distance
@@ -126,10 +127,12 @@ def make_layer(stacking,cell_type,n_1,n_2,lat_con,z_val,sym,mass):
         layer.translate(horz_shift+vert_shift) #shift layer according to stacking and z_val
         n_atoms_layer=layer.get_masses().shape[0] #extract number of atoms in layer
         layer.set_masses(mass*np.ones(n_atoms_layer)) #set masses to mass (rather than ASE default by symbol)
+        layer.set_array("mol-id",mol_id*np.ones(n_atoms_layer,dtype=np.int8))
     return layer
 
 
-def make_graphene(stacking,cell_type,n_1,n_2,lat_con,n_layer,sep,a_nn=None,sym='C',mass=12.01,h_vac=None):
+def make_graphene(stacking,cell_type,n_1,n_2,lat_con,n_layer,sep,a_nn=None,sym='C',
+                  mass=12.01,mol_id=None,h_vac=None):
     """
     Generates untwisted, uncorrugated graphene and returns ASE atoms object
     with specified graphene's geometry
@@ -153,6 +156,7 @@ def make_graphene(stacking,cell_type,n_1,n_2,lat_con,n_layer,sep,a_nn=None,sym='
          for every layer
     mass: optional mass, list of length n_layer containing numeric values
           or single numerical value if every layer has the same mass
+    mol_id: molecular IDs for each layer
     h_vac: height of the vacuum layer above and below outer layers, float [Angstroms]
     ---Output---
     atoms: ASE atoms object
@@ -210,13 +214,14 @@ def make_graphene(stacking,cell_type,n_1,n_2,lat_con,n_layer,sep,a_nn=None,sym='
         if (len(sep) != n_layer):
             print('ERROR: specifying sep as list requires list length n_layer')
             return
-        else:
-            sep_input=np.array([0.0]+sep,dtype=float) #sneak in leading 0.0 for first layer
+        else: #compute z_abs = [first_layer_z, ..., last_layer_z, total_box_height]
+            sep_input=np.array([0.0]+sep,dtype=float) #sneak in 0 so first_layer_z = 0
             z_abs=np.empty(sep_input.shape[0],dtype=float)
             for i_sep in range(z_abs.shape[0]): #compute offsets relative to bottom layer
                 z_abs[i_sep]=np.sum(sep_input[0:i_sep+1])
+            print('z_abs:',z_abs)
     elif (isinstance(sep,(float,int))):
-        sep_input=np.array([0.0]+[sep]*(n_layer-1),dtype=float) #sneak in 0.0
+        sep_input=np.array([0.0]+[sep]*(n_layer-1),dtype=float) #sneak in 0 so first_layer_z = 0
         z_abs=sep*np.arange(n_layer+1) #[0, sep, 2*sep, ...]
 
     #check errors in sym
@@ -239,13 +244,26 @@ def make_graphene(stacking,cell_type,n_1,n_2,lat_con,n_layer,sep,a_nn=None,sym='
     else:
         print('ERROR: optional mass inputs must be list or numeric')
 
-    #create specified geometry layer by layer
-    #add layers on top one at a time
+    #check errors in mol_id
+    if (isinstance(mol_id,list)):
+        if (len(mol_id) != n_layer):
+            print('ERROR: specifying mol_id as list requires length n_layer')
+            return
+    elif (isinstance(mol_id,(float,int))):
+        mol_id=int(mol_id)*np.ones(n_layer)
+    elif (mol_id is None):
+        mol_id = np.arange(1,n_layer+1)
+    else:
+        print('ERROR: optional mol_id inputs must be list or numeric')
+
+    #create specified geometry layer by layer (add layers on top one at a time)
     for i_layer in range(0,n_layer):
         if (i_layer == 0): #create new atoms object
-            atoms = make_layer(stacking[i_layer],cell_type,n_1,n_2,lat_con,z_abs[i_layer],sym[i_layer],mass[i_layer]) 
+            atoms = make_layer(stacking[i_layer],cell_type,n_1,n_2,lat_con,
+                               z_abs[i_layer],sym[i_layer],mass[i_layer],mol_id[i_layer]) 
         else: #add atoms to object
-            atoms += make_layer(stacking[i_layer],cell_type,n_1,n_2,lat_con,z_abs[i_layer],sym[i_layer],mass[i_layer]) 
+            atoms += make_layer(stacking[i_layer],cell_type,n_1,n_2,lat_con,
+                                z_abs[i_layer],sym[i_layer],mass[i_layer],mol_id[i_layer]) 
         #adjust z-height of simulation cell
         cur_cell=atoms.get_cell()
         cur_cell[2]=z_abs[i_layer+1]*np.eye(3)[:,2] #set z-height as vector, set buffer above to previous interlayer separation (fine in most cases)
@@ -272,5 +290,6 @@ if (__name__=="__main__"):
     #example to modify when working on module
     atoms=make_graphene(stacking=['A','B','C'],cell_type='hex',
                         n_layer=3,n_1=3,n_2=3,lat_con=0.0,a_nn=1.5,
-                        sep=3.0,sym=['O','F','N'],mass=np.array([0,1,2]))
+                        sep=[3.0,2,4],sym=['O','F','N'],mass=[0,1,2])
+    print(atoms.get_array("mol-id"))
     ase.visualize.view(atoms)
