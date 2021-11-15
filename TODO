@@ -1,4 +1,5 @@
 
 To do:
-   - fix examples/tests
-   - rectangular cell for twisted bilayer graphene
+   - fix tests using virtual environments
+   - add a help command to spit documentation out to terminal (saving README space)
+   - rectangular cell for twisted bilayer graphene?

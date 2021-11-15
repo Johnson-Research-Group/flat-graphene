@@ -1,7 +1,7 @@
 
 import ase
 from ase.visualize import view
-from .context import flatgraphene as fg
+import flatgraphene as fg
 
 #small bilayer system with simple inputs
 p_found, q_found, theta_comp = fg.twist.find_p_q(21.79)

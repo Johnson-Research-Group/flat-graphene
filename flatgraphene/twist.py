@@ -2,7 +2,7 @@
 import copy
 import numpy as np
 import ase
-import shift
+from flatgraphene import shift
 from ase.visualize import view
 
 

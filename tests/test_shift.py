@@ -1,7 +1,7 @@
 
 import ase
 from ase.visualize import view
-from .context import flatgraphene as fg
+import flatgraphene as fg
 
 
 #standard hexagonal AB bilayer with simple inputs
