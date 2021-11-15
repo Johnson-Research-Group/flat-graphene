@@ -218,7 +218,6 @@ def make_graphene(stacking,cell_type,n_1,n_2,lat_con,n_layer,sep,a_nn=None,sym='
             z_abs=np.empty(sep_input.shape[0],dtype=float)
             for i_sep in range(z_abs.shape[0]): #compute offsets relative to bottom layer
                 z_abs[i_sep]=np.sum(sep_input[0:i_sep+1])
-            print('z_abs:',z_abs)
     elif (isinstance(sep,(float,int))):
         sep_input=np.array([0.0]+[sep]*(n_layer-1),dtype=float) #sneak in 0 so first_layer_z = 0
         z_abs=sep*np.arange(n_layer+1) #[0, sep, 2*sep, ...]
@@ -290,5 +289,4 @@ if (__name__=="__main__"):
     atoms=make_graphene(stacking=['A','B','C'],cell_type='hex',
                         n_layer=3,n_1=3,n_2=3,lat_con=0.0,a_nn=1.5,
                         sep=[3.0,2,4],sym=['O','F','N'],mass=[0,1,2])
-    print(atoms.get_array("mol-id"))
     ase.visualize.view(atoms)
