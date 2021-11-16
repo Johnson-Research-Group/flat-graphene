@@ -7,6 +7,7 @@ TESTDIR=tests
 VENV=test_venv
 ACTIVATE=$(VENV)/bin/activate
 VENVPIP=$(VENV)/bin/pip
+SANDBOX=sbox/sandbox.py
 
 #create/update virtual environment for testing
 update-venv:
@@ -33,6 +34,14 @@ test:
 	@(\
 	source $(ACTIVATE); \
 	for f in $(TESTDIR)/*.py; do python "$$f"; done; \
+	deactivate; \
+	)
+
+#development sandbox for on the fly testing
+sandbox:
+	@(\
+	source $(ACTIVATE); \
+	python $(SANDBOX); \
 	deactivate; \
 	)
 

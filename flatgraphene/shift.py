@@ -282,11 +282,3 @@ def make_graphene(stacking,cell_type,n_1,n_2,lat_con,n_layer,sep,a_nn=None,sym='
     atoms.wrap() #wrap atoms to make sure all are within defined box
     return atoms
 
-        
-
-if (__name__=="__main__"):
-    #example to modify when working on module
-    atoms=make_graphene(stacking=['A','B','C'],cell_type='hex',
-                        n_layer=3,n_1=3,n_2=3,lat_con=0.0,a_nn=1.5,
-                        sep=[3.0,2,4],sym=['O','F','N'],mass=[0,1,2])
-    ase.visualize.view(atoms)
