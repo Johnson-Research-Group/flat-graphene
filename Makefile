@@ -8,6 +8,7 @@ VENV=test_venv
 ACTIVATE=$(VENV)/bin/activate
 VENVPIP=$(VENV)/bin/pip
 
+#create/update virtual environment for testing
 update-venv:
 	@#operations in order:
 	@#make virtual environment
@@ -15,28 +16,27 @@ update-venv:
 	@#install package to be tested in editable form (automatically gets dependencies)
 	@#deactivate virtual environment
 	@#all above directed to shell (necessary)
-	(\
+	@(\
 	virtualenv $(VENV); \
 	source $(ACTIVATE); \
 	$(VENVPIP) install -e .; \
 	deactivate; \
 	)
-	@#copy tests into virtual environment
-	mkdir -p $(VENV)/bin/tests
-	cp tests/*.py $(VENV)/bin/tests
 
+#test using virtual environment
 test:
 	@#operations in order:
-	@#activate venv
-	@#run all scripts in test directory 
+	@#activate virtual environment
+	@#run all scripts in $(TESTDIR) directory 
+	@#deactivate virtual environment
 	@#all directed to shell (necessary)
-	(\
+	@(\
 	source $(ACTIVATE); \
-	python $(TESTDIR)/test_shift.py; \
+	for f in $(TESTDIR)/*.py; do python "$$f"; done; \
 	deactivate; \
 	)
-	#for f in $(TESTDIR)/*.py; do python "$f"; done; \
 
+#remove virtual environment
 clean:
 	@\rm -rf test_venv
 
