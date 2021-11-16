@@ -3,9 +3,10 @@ import setuptools
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+include_package_data = True #include non-Python files specified in MANIFEST.in
 setuptools.setup(
     name='flatgraphene',  
-    version='0.3.1',
+    version='0.3.3',
     scripts=['bin/flatgraphene'] ,
     author="Gabriel H. Brown",
     author_email="gabriel.h.brown@gmail.com",
@@ -14,7 +15,6 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/Johnson-Research-Group/flat-graphene",
     packages=setuptools.find_packages(),
-    package_data={setuptools.find_packages()[0] : ['flatgraphene/help_doc.md']}, #include non-python file(s)
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
