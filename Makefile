@@ -49,3 +49,10 @@ sandbox:
 clean:
 	@\rm -rf test_venv
 
+
+#STEPS TO UPDATE PYTHON PACKAGE
+# 1. bump version number
+# 2. make sure dist is clear of old version(s) (move to old_dist)
+# 3. $ python3 setup.py bdist_wheel
+# 4. $ python -m twine upload dist/*
+

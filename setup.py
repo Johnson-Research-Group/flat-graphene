@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name='flatgraphene',  
-    version='0.2',
+    version='0.3.1',
     scripts=['bin/flatgraphene'] ,
     author="Gabriel H. Brown",
     author_email="gabriel.h.brown@gmail.com",
@@ -14,6 +14,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/Johnson-Research-Group/flat-graphene",
     packages=setuptools.find_packages(),
+    package_data={setuptools.find_packages()[0] : ['flatgraphene/help_doc.md']}, #include non-python file(s)
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
