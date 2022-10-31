@@ -15,13 +15,13 @@ if (not np.isclose(dist,test_dist)):
 
 
 #standard hexagonal AB bilayer with simple inputs
-atoms = fg.shift.make_graphene(stacking=['A','B'],cell_type='hex',n_1=3,n_2=3,
+atoms = fg.shift.make_graphene(stacking=['A','SP'],cell_type='hex',n_1=3,n_2=3,
 	    		       lat_con=0.0,n_layer=2,sep=1.0,a_nn=1.5)
 ase.visualize.view(atoms)
 
 #arbitrary 5 layer system with per-layer inputs, and using every feature
-atoms = fg.shift.make_graphene(stacking=['A','B','A','SP','SP'],cell_type='rect',n_1=3,n_2=3,
-                               lat_con=0.0,n_layer=5,sep=[1.0,1.5,1.5,3.0,1.0],a_nn=1.5,
-                               sym=['C','B','N','O','Kr'],mass=[12.01,11,10,9,8],
-                               mol_id=[1,2,3,4,5],h_vac=6)
-ase.visualize.view(atoms)
+# atoms = fg.shift.make_graphene(stacking=['A','B','A','SP','SP'],cell_type='rect',n_1=3,n_2=3,
+#                                lat_con=0.0,n_layer=5,sep=[1.0,1.5,1.5,3.0,1.0],a_nn=1.5,
+#                                sym=['C','B','N','O','Kr'],mass=[12.01,11,10,9,8],
+#                                mol_id=[1,2,3,4,5],h_vac=6)
+# ase.visualize.view(atoms)
