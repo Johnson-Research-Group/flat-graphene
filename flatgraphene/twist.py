@@ -131,7 +131,7 @@ def make_unique_twisted_layers(p,q,lat_con):
                                 [-p + q]])
 
     #DETERMINE SIZE OF OVERSIZED UNTWISTED LAYER
-    unit_layer = shift.make_layer('A','hex',1,1,lat_con[0],1.0,'C',12.01,1) #layer with first lattice vector in x direction
+    unit_layer = shift.make_layer('A','hex',1,1,lat_con,1.0,'C',12.01,1) #layer with first lattice vector in x direction
     unit_cell = unit_layer.get_cell() #extract box/cell vectors
 
     lat_vec_mat_nontwisted = unit_cell[:2,:2].T #matrix of 2D lattice vectors from box vectors, one per column
@@ -147,7 +147,7 @@ def make_unique_twisted_layers(p,q,lat_con):
     n_y = int(n_y)
 
     #GENERATE OVERSIZED NONTWISTED LAYER (with first box vector along [1,0,0])
-    nontwisted_layer = shift.make_layer('A','hex',n_x,n_y,lat_con[1],0.0,'C',12.01,1) #layer with first lattice vector in x direction; symbol, mass, etc. will be overwritten later and are irrelevant
+    nontwisted_layer = shift.make_layer('A','hex',n_x,n_y,lat_con,0.0,'C',12.01,1) #layer with first lattice vector in x direction; symbol, mass, etc. will be overwritten later and are irrelevant
     theta_nontwisted_less = np.arccos(np.dot(n_loc,np.eye(2)[0])/np.linalg.norm(n_loc)) #angle between unrotated layer with lattice vector along [1,0,0] and lesser rotated layer with first lattice vector along n_loc
 
     #CONTRUCT LESS TWISTED LAYER
@@ -249,20 +249,13 @@ def make_graphene(cell_type,p,q,lat_con,n_layer,sep,a_nn=None,sym='C',
         lat_con=2*a_nn*np.sin(np.pi/3)
     elif ((a_nn) and (cell_type == 'hex')):
         lat_con = (3/np.sqrt(2*(1+np.cos(np.pi/3))))*a_nn
-    
+
     #check n_layer
     if (n_layer - int(n_layer) != 0.0):
         print('ERROR: n_layer must be a positive integer')
         return
     else:
         n_layer = int(n_layer) #clean input
-
-    if type(lat_con) ==np.ndarray or type(lat_con)==list:
-        if len(lat_con)!=n_layer:
-            print('ERROR: specifying lat_con as list requires list length n_layer')
-            
-    else:
-        lat_con = lat_con*np.ones(n_layer)
 
     #check errors in sep (turn into list if necessary), and compute z_abs
     if (not sep):
