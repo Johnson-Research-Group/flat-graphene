@@ -53,14 +53,10 @@ def remove_atoms_outside_cell(atoms_object):
     ---Outputs---
     NONE, atoms_object is edited directly
     """
-    original_positions = atoms_object.get_positions()
-    temp_atoms_object = copy.deepcopy(atoms_object)
-    temp_atoms_object.wrap()
-    wrapped_positions = temp_atoms_object.get_positions()
-    out_of_bounds_indices = [atoms_object[i].index for i in range(original_positions.shape[0])
-                           if (not np.allclose(original_positions[i],wrapped_positions[i]))]
-    del atoms_object[out_of_bounds_indices] #remove out of bounds atoms by known index
-
+    scaled_pos = atoms_object.get_scaled_positions()
+    for i,s in enumerate(scaled_pos):
+        if np.max(s)>1 or np.min(s)<0:
+            del atoms_object[i] #remove out of bounds atoms by known index
 
 def rotate_to_standard(atoms_object):
     """
